@@ -31,6 +31,7 @@ def fetch_search_instructions(prompt_name: str) -> str:
         - write_summary
         - generate_documentation
         - extract_structured_data
+        - report_path_type_check
 
     Returns:
         str: Instructions for the given prompt
