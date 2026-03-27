@@ -2,7 +2,7 @@
 start-mcp:
     #!/bin/bash
     if [ -f {{justfile_directory()}}/.env ]; then
-        if grep -Eq '^[[:space:]]*OPENAI_API_KEY[[:space:]]*=[[:space:]]*[^[:space:]]+' .env; then
+        if grep -Eq '^[[:space:]]*OPENAI_API_KEY[[:space:]]*=[[:space:]]*[^[:space:]]+' {{justfile_directory()}}/.env; then
             echo "OPENAI_API_KEY found, running app..."
             uv run python main.py
         else
