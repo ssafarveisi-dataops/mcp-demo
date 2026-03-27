@@ -13,16 +13,21 @@ Use this tool whenever a user provides a directory path or asks to find files/co
 ### read_file_content
 Use this tool when you need to open and read the contents of a specific file identified during search.
 
+### check_path_type
+Use this tool whenever you need to verify whether a given path is a **file** or a **directory** before performing further operations.
+
 ### fetch_search_instructions
 Use this tool to get **specialized instructions** for common user requests, including:
 
 - Writing a summary of files  
 - Generating documentation from code  
-- Extracting structured information from files  
+- Extracting structured information from files
+- Report on the number of files and directories 
 
 To fetch the correct instructions, pass one of the following **exact** prompts:
 - write_summary  
 - generate_documentation  
-- extract_structured_data  
+- extract_structured_data 
+- report_path_type_check 
 
 **Important:** Do **not** guess how to complete these tasks. Always fetch the instructions and follow them exactly.

@@ -48,28 +48,35 @@ def fetch_search_instructions(prompt_name: str) -> str:
 @mcp.tool()
 def search_directory(path: str, pattern: str = "*") -> str:
     """
-    Search for files in a directory matching a pattern
+    Search for files and directories in a directory matching a pattern
 
     Args:
         path (str): Directory path to search
-        pattern (str): File pattern (e.g., '*.py', '*.txt')
+        pattern (str): Name pattern (e.g., '*.py', 'data*')
 
     Returns:
-        str: List of matching file paths
+        str: List of matching file and directory paths
     """
     if not os.path.exists(path):
         raise FileNotFoundError(f"Directory '{path}' does not exist")
 
     matches = []
 
-    for root, _, files in os.walk(path):
-        for name in files:
-            if fnmatch.fnmatch(name, pattern):
-                full_path = os.path.join(root, name)
-                matches.append(full_path)
+    for root, dirs, files in os.walk(path):
+        # Check directories
+        for d in dirs:
+            if fnmatch.fnmatch(d, pattern):
+                full_path = os.path.join(root, d)
+                matches.append(f"[DIR]  {full_path}")
+
+        # Check files
+        for f in files:
+            if fnmatch.fnmatch(f, pattern):
+                full_path = os.path.join(root, f)
+                matches.append(f"[FILE] {full_path}")
 
     if not matches:
-        return "No matching files found."
+        return "No matching files or directories found."
 
     return "\n".join(matches)
 
@@ -91,6 +98,30 @@ def read_file_content(file_path: str) -> str:
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
+@mcp.tool()
+def check_path_type(paths: list[str]) -> dict:
+    """
+    Determine whether each given path is a file or a directory.
+
+    Args:
+        paths (list[str]): List of paths to check
+
+    Returns:
+        dict: Mapping of path -> type ("file", "directory", "not_found", "unknown")
+    """
+    result = {}
+
+    for path in paths:
+        if not os.path.exists(path):
+            result[path] = "not_found"
+        elif os.path.isfile(path):
+            result[path] = "file"
+        elif os.path.isdir(path):
+            result[path] = "directory"
+        else:
+            result[path] = "unknown"
+
+    return result
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")

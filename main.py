@@ -69,6 +69,8 @@ async def run(mcp_server: MCPServer):
                     tool_name = event.item.raw_item.name
                     if tool_name == "search_directory":
                         status_msg = "\n-- Searching directory..."
+                    elif tool_name == "check_path_type":
+                        status_msg = "\n-- Checking path type"
                     elif tool_name == "read_file_content":
                         status_msg = "\n-- Reading file content..."
                     elif tool_name == "fetch_search_instructions":
