@@ -2,6 +2,8 @@ from mcp.server.fastmcp import FastMCP
 import os
 import fnmatch
 
+import requests
+
 # Suppress MCP INFO logs to reduce console output
 import logging
 logging.getLogger("mcp").setLevel(logging.WARNING)
@@ -123,6 +125,38 @@ def check_path_type(paths: list[str]) -> dict:
             result[path] = "unknown"
 
     return result
+
+@mcp.tool()
+def fetch_post_by_id(post_id: str) -> dict:
+    """
+    Fetch a post from an external API by ID.
+
+    Args:
+        post_id (str): ID of the post
+
+    Returns:
+        dict: JSON response containing the post data
+    """
+    url = f"https://jsonplaceholder.typicode.com/posts/{post_id}"
+
+    try:
+        response = requests.get(url, timeout=10)
+
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 404:
+            return {"error": "Post not found", "post_id": post_id}
+        else:
+            return {
+                "error": f"Unexpected status code: {response.status_code}",
+                "post_id": post_id
+            }
+
+    except requests.exceptions.RequestException as e:
+        return {
+            "error": f"Request failed: {str(e)}",
+            "post_id": post_id
+        }
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")

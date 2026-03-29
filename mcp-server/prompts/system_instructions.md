@@ -16,18 +16,26 @@ Use this tool when you need to open and read the contents of a specific file ide
 ### check_path_type
 Use this tool whenever you need to verify whether a given path is a **file** or a **directory** before performing further operations.
 
+### fetch_post_by_id
+Use this tool when you need to retrieve data from an external API using a post ID.
+
+- Input: A numeric post ID  
+- Output: A structured JSON object (as a dictionary)
+
 ### fetch_search_instructions
 Use this tool to get **specialized instructions** for common user requests, including:
 
 - Writing a summary of files  
 - Generating documentation from code  
 - Extracting structured information from files
-- Report on the number of files and directories 
+- Report on the number of files and directories
+- Write a summary for a post fetched from an api
 
 To fetch the correct instructions, pass one of the following **exact** prompts:
 - write_summary  
 - generate_documentation  
 - extract_structured_data 
 - report_path_type_check 
+- write_post_summary
 
 **Important:** Do **not** guess how to complete these tasks. Always fetch the instructions and follow them exactly.
