@@ -75,7 +75,7 @@ def search_directory(path: str, pattern: str = "*") -> str:
         for d in dirs:
             if fnmatch.fnmatch(d, pattern):
                 full_path = os.path.join(root, d)
-                matches.append(f"[DIR]  {full_path}")
+                matches.append(f"[DIR] {full_path}")
 
         # Check files
         for f in files:
@@ -107,7 +107,7 @@ def read_file_content(file_path: str) -> str:
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
-
+# Tool: check_path_type
 @mcp.tool()
 def check_path_type(paths: list[str]) -> dict:
     """
@@ -133,7 +133,7 @@ def check_path_type(paths: list[str]) -> dict:
 
     return result
 
-
+# Tool: fetch_post_by_id
 @mcp.tool()
 def fetch_post_by_id(post_id: str) -> dict:
     """
