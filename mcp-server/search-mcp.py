@@ -6,10 +6,12 @@ import requests
 
 # Suppress MCP INFO logs to reduce console output
 import logging
+
 logging.getLogger("mcp").setLevel(logging.WARNING)
 
 # Create an MCP server
 mcp = FastMCP("search-mcp")
+
 
 # Create prompt
 @mcp.prompt()
@@ -19,6 +21,7 @@ def system_prompt() -> str:
     prompt_path = os.path.join(script_dir, "prompts", "system_instructions.md")
     with open(prompt_path, "r") as file:
         return file.read()
+
 
 # Tool: fetch_search_instructions
 @mcp.tool()
@@ -47,6 +50,7 @@ def fetch_search_instructions(prompt_name: str) -> str:
 
     with open(prompt_path, "r") as f:
         return f.read()
+
 
 # Tool: search_directory
 @mcp.tool()
@@ -84,6 +88,7 @@ def search_directory(path: str, pattern: str = "*") -> str:
 
     return "\n".join(matches)
 
+
 # Tool: read_file_content
 @mcp.tool()
 def read_file_content(file_path: str) -> str:
@@ -101,6 +106,7 @@ def read_file_content(file_path: str) -> str:
 
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
+
 
 @mcp.tool()
 def check_path_type(paths: list[str]) -> dict:
@@ -127,6 +133,7 @@ def check_path_type(paths: list[str]) -> dict:
 
     return result
 
+
 @mcp.tool()
 def fetch_post_by_id(post_id: str) -> dict:
     """
@@ -150,14 +157,12 @@ def fetch_post_by_id(post_id: str) -> dict:
         else:
             return {
                 "error": f"Unexpected status code: {response.status_code}",
-                "post_id": post_id
+                "post_id": post_id,
             }
 
     except requests.exceptions.RequestException as e:
-        return {
-            "error": f"Request failed: {str(e)}",
-            "post_id": post_id
-        }
+        return {"error": f"Request failed: {str(e)}", "post_id": post_id}
+
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")

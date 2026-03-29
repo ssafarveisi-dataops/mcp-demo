@@ -1,6 +1,5 @@
 import os
 
-from agents import Agent, Runner
 from agents.mcp import MCPServerStdio, MCPServer
 from agents import Agent, Runner, gen_trace_id, trace
 from openai.types.responses import ResponseTextDeltaEvent
@@ -10,13 +9,16 @@ from dotenv import load_dotenv
 # Load environment variables (e.g., OPENAI_API_KEY)
 load_dotenv()
 
+
 async def main():
     """
     Start the MCP server for the Search Agent with proper environment variables
     and trace the session for debugging and monitoring.
     """
     # Copy current environment variables to pass to the MCP server
-    env_vars = os.environ.copy()  # e.g., includes custom CA bundle for corporate proxies like Zscaler
+    env_vars = (
+        os.environ.copy()
+    )  # e.g., includes custom CA bundle for corporate proxies like Zscaler
 
     # Start the MCP server using standard I/O transport
     async with MCPServerStdio(
@@ -32,10 +34,13 @@ async def main():
 
         # Context manager for tracing workflow
         with trace(workflow_name="Search MCP Agent Example", trace_id=trace_id):
-            print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}\n")
+            print(
+                f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}\n"
+            )
 
             # Run the agent loop
             await run(server)
+
 
 async def run(mcp_server: MCPServer):
     """
@@ -51,7 +56,7 @@ async def run(mcp_server: MCPServer):
         name="Directory Search Agent",
         instructions=instructions,
         mcp_servers=[mcp_server],
-        model="openai/gpt-4.1"
+        model="openai/gpt-4.1",
     )
 
     conversation_history = []
@@ -63,7 +68,7 @@ async def run(mcp_server: MCPServer):
         user_input = input("\nUser: ").strip()
 
         # Exit condition
-        if user_input.lower() in ['exit', 'quit', 'bye']:
+        if user_input.lower() in ["exit", "quit", "bye"]:
             print("\nGoodbye!")
             break
 
@@ -80,7 +85,9 @@ async def run(mcp_server: MCPServer):
 
         async for event in result.stream_events():
             # Handle partial text responses
-            if event.type == "raw_response_event" and isinstance(event.data, ResponseTextDeltaEvent):
+            if event.type == "raw_response_event" and isinstance(
+                event.data, ResponseTextDeltaEvent
+            ):
                 print(event.data.delta, end="", flush=True)
 
             # Handle tool events
@@ -93,19 +100,24 @@ async def run(mcp_server: MCPServer):
                         "check_path_type": "-- Checking path type...",
                         "read_file_content": "-- Reading file content...",
                         "fetch_post_by_id": "-- Fetching a post...",
-                        "fetch_search_instructions": "-- Fetching instructions..."
+                        "fetch_search_instructions": "-- Fetching instructions...",
                     }.get(tool_name, f"-- Calling {tool_name}...")
                     print(status_msg)
 
                 elif item.type == "tool_call_output_item":
-                    conversation_history.append({"role": "user", "content": str(item.output)})
+                    conversation_history.append(
+                        {"role": "user", "content": str(item.output)}
+                    )
                     print("-- Tool call completed.")
 
                 elif item.type == "message_output_item":
                     msg_text = item.raw_item.content[0].text
-                    conversation_history.append({"role": "assistant", "content": msg_text})
+                    conversation_history.append(
+                        {"role": "assistant", "content": msg_text}
+                    )
 
         print("\n")  # Add newline after each response
+
 
 if __name__ == "__main__":
     asyncio.run(main())

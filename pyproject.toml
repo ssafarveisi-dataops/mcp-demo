@@ -10,3 +10,8 @@ dependencies = [
     "openai-agents>=0.13.2",
     "python-dotenv>=1.2.2",
 ]
+
+[dependency-groups]
+lint = [
+    "ruff>=0.15.8",
+]
