@@ -1,0 +1,13 @@
+{
+	"servers": {
+		"simple-mcp-server": {
+			"type": "stdio",
+			"command": "uv",
+			"args": [
+				"run",
+				"mcp-server/search-mcp.py",
+			]
+		}
+	},
+	"inputs": []
+}

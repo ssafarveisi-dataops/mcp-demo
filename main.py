@@ -56,7 +56,7 @@ async def run(mcp_server: MCPServer):
         name="Directory Search Agent",
         instructions=instructions,
         mcp_servers=[mcp_server],
-        model="openai/gpt-4.1",
+        model="gpt-3.5-turbo",
     )
 
     conversation_history = []

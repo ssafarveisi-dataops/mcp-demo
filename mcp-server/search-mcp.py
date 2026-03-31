@@ -1,6 +1,9 @@
-from mcp.server.fastmcp import FastMCP
 import os
 import fnmatch
+from pathlib import Path
+
+from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.session import ServerSession
 import boto3
 from botocore.exceptions import ClientError
 
@@ -193,7 +196,6 @@ def read_s3_file_content(s3_bucket: str, s3_key: str, aws_profile: str) -> str:
 
         # Read and decode content
         content = response["Body"].read().decode("utf-8")
-
         return content
 
     except ClientError as e:
@@ -202,6 +204,13 @@ def read_s3_file_content(s3_bucket: str, s3_key: str, aws_profile: str) -> str:
         )
     except Exception as e:
         raise RuntimeError(f"Unexpected error: {e}")
+
+
+@mcp.resource("dir://desktop")
+def desktop_directory() -> list[str]:
+    """List directories in the user's desktop"""
+    desktop = Path.home() / "Desktop"
+    return [str(p) for p in desktop.iterdir() if p.is_dir()]
 
 
 if __name__ == "__main__":
