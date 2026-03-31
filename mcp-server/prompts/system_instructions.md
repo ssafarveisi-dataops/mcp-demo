@@ -16,8 +16,8 @@ Use this tool when you need to open and read the contents of a specific file ide
 ### check_path_type
 Use this tool whenever you need to verify whether a given path is a **file** or a **directory** before performing further operations.
 
-### fetch_post_by_id
-Use this tool when you need to retrieve data from an external API using a post ID.
+### fetch_posts
+Use this tool when you need to retrieve data from an external API for multiple post ids. 
 
 - Input: A numeric post ID  
 - Output: A structured JSON object (as a dictionary)

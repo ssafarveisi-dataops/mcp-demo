@@ -1,7 +1,11 @@
 import os
 import fnmatch
 from pathlib import Path
+import asyncio
 
+import httpx
+from typing import Annotated
+from pydantic import BaseModel, Field, field_validator
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.session import ServerSession
 import boto3
@@ -16,6 +20,45 @@ logging.getLogger("mcp").setLevel(logging.WARNING)
 
 # Create an MCP server
 mcp = FastMCP("search-mcp")
+
+
+class PostSuccess(BaseModel):
+    post_id: int
+    data: dict
+
+
+class PostError(BaseModel):
+    post_id: int
+    error: str
+
+
+class PostResponse(BaseModel):
+    count: int
+    results: list[Annotated[PostSuccess | PostError, Field(discriminator=None)]]
+
+
+class PostRequest(BaseModel):
+    class Post(BaseModel):
+        post_id: Annotated[int, Field(gt=0, description="Post ID must be positive")]
+
+    posts: list[Post] = Field(
+        ..., max_length=20, description="Maximum of 20 posts allowed per request"
+    )
+
+    @field_validator("posts")
+    def validate_and_deduplicate(cls, v):
+        if not v:
+            raise ValueError("At least one post_id must be provided")
+
+        # Deduplicate while preserving order
+        seen = set()
+        unique_posts = []
+        for item in v:
+            if item.post_id not in seen:
+                seen.add(item.post_id)
+                unique_posts.append(item)
+
+        return unique_posts
 
 
 # Helper function to centralize file reading logic
@@ -141,35 +184,43 @@ def check_path_type(paths: list[str]) -> dict:
     return result
 
 
-# Tool: fetch_post_by_id
-@mcp.tool()
-def fetch_post_by_id(post_id: str) -> dict:
-    """
-    Fetch a post from an external API by ID.
-
-    Args:
-        post_id (str): ID of the post
-
-    Returns:
-        dict: JSON response containing the post data
-    """
+async def fetch_single_post(client: httpx.AsyncClient, post_id: int) -> dict:
     url = f"https://jsonplaceholder.typicode.com/posts/{post_id}"
 
     try:
-        response = requests.get(url, timeout=10)
+        response = await client.get(url, timeout=10)
 
         if response.status_code == 200:
-            return response.json()
-        elif response.status_code == 404:
-            return {"error": "Post not found", "post_id": post_id}
-        else:
-            return {
-                "error": f"Unexpected status code: {response.status_code}",
-                "post_id": post_id,
-            }
+            return PostSuccess(post_id=post_id, data=response.json()).dict()
 
-    except requests.exceptions.RequestException as e:
-        return {"error": f"Request failed: {str(e)}", "post_id": post_id}
+        elif response.status_code == 404:
+            return PostError(post_id=post_id, error="Post not found").dict()
+
+        else:
+            return PostError(
+                post_id=post_id, error=f"Unexpected status code: {response.status_code}"
+            ).dict()
+
+    except httpx.RequestError as e:
+        return PostError(post_id=post_id, error=f"Request failed: {str(e)}").dict()
+
+
+# Tool: fetch_post_by_id
+@mcp.tool()
+async def fetch_posts(request: PostRequest) -> dict:
+    """
+    Fetch multiple posts concurrently with validation, deduplication,
+    and structured response schema.
+    """
+
+    async with httpx.AsyncClient() as client:
+        tasks = [fetch_single_post(client, post.post_id) for post in request.posts]
+
+        results = await asyncio.gather(*tasks)
+
+    response = PostResponse(count=len(results), results=results)
+
+    return response.dict()
 
 
 # Tool: read_s3_file_content
