@@ -48,6 +48,7 @@ def fetch_search_instructions(prompt_name: str) -> str:
         - extract_structured_data
         - report_path_type_check
         - write_post_summary
+        - write_s3_file_summary
 
     Returns:
         str: Instructions for the given prompt
