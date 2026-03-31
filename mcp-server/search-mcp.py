@@ -13,14 +13,22 @@ logging.getLogger("mcp").setLevel(logging.WARNING)
 mcp = FastMCP("search-mcp")
 
 
-# Create prompt
+# Helper function to centralize file reading logic
+def _read_prompt_file(file_path: str) -> str:
+    """Read a prompt file with consistent error handling."""
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Prompt file not found: {file_path}")
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 @mcp.prompt()
 def system_prompt() -> str:
     """Instructions for Directory Search agent"""
     script_dir = os.path.dirname(__file__)
     prompt_path = os.path.join(script_dir, "prompts", "system_instructions.md")
-    with open(prompt_path, "r") as file:
-        return file.read()
+    return _read_prompt_file(prompt_path)
 
 
 # Tool: fetch_search_instructions
@@ -44,12 +52,7 @@ def fetch_search_instructions(prompt_name: str) -> str:
     """
     script_dir = os.path.dirname(__file__)
     prompt_path = os.path.join(script_dir, "prompts", f"{prompt_name}.md")
-
-    if not os.path.exists(prompt_path):
-        raise FileNotFoundError(f"Prompt '{prompt_name}' not found")
-
-    with open(prompt_path, "r") as f:
-        return f.read()
+    return _read_prompt_file(prompt_path)
 
 
 # Tool: search_directory
@@ -68,25 +71,22 @@ def search_directory(path: str, pattern: str = "*") -> str:
     if not os.path.exists(path):
         raise FileNotFoundError(f"Directory '{path}' does not exist")
 
+    # Validate that path is actually a directory
+    if not os.path.isdir(path):
+        raise NotADirectoryError(f"Path is not a directory: {path}")
+
     matches = []
 
     for root, dirs, files in os.walk(path):
-        # Check directories
         for d in dirs:
             if fnmatch.fnmatch(d, pattern):
-                full_path = os.path.join(root, d)
-                matches.append(f"[DIR] {full_path}")
+                matches.append(f"[DIR] {os.path.join(root, d)}")
 
-        # Check files
         for f in files:
             if fnmatch.fnmatch(f, pattern):
-                full_path = os.path.join(root, f)
-                matches.append(f"[FILE] {full_path}")
+                matches.append(f"[FILE] {os.path.join(root, f)}")
 
-    if not matches:
-        return "No matching files or directories found."
-
-    return "\n".join(matches)
+    return "\n".join(matches) if matches else "No matching files or directories found."
 
 
 # Tool: read_file_content
@@ -106,6 +106,7 @@ def read_file_content(file_path: str) -> str:
 
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
+
 
 # Tool: check_path_type
 @mcp.tool()
@@ -132,6 +133,7 @@ def check_path_type(paths: list[str]) -> dict:
             result[path] = "unknown"
 
     return result
+
 
 # Tool: fetch_post_by_id
 @mcp.tool()
