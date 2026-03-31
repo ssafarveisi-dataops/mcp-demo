@@ -100,6 +100,7 @@ async def run(mcp_server: MCPServer):
                         "check_path_type": "-- Checking path type...",
                         "read_file_content": "-- Reading file content...",
                         "fetch_post_by_id": "-- Fetching a post...",
+                        "read_s3_file_content": "-- Reading S3 file content...",
                         "fetch_search_instructions": "-- Fetching instructions...",
                     }.get(tool_name, f"-- Calling {tool_name}...")
                     print(status_msg)

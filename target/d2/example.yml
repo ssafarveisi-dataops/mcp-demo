@@ -1,2 +1,3 @@
-apiVerion: v0.1.0
-applicationFile: s3://bucket/pyspark/app.py
+apiVersion: v0.1.0
+applicationFile: s3://eks-dataops-test/address_rewriter_output.py
+awsProfile: cognism-data-mlops-dev 

@@ -1,6 +1,8 @@
 from mcp.server.fastmcp import FastMCP
 import os
 import fnmatch
+import boto3
+from botocore.exceptions import ClientError
 
 import requests
 
@@ -164,6 +166,41 @@ def fetch_post_by_id(post_id: str) -> dict:
 
     except requests.exceptions.RequestException as e:
         return {"error": f"Request failed: {str(e)}", "post_id": post_id}
+
+
+# Tool: read_s3_file_content
+@mcp.tool()
+def read_s3_file_content(s3_bucket: str, s3_key: str, aws_profile: str) -> str:
+    """
+    Read the content of a file from S3
+
+    Args:
+        s3_bucket (str): Name of the S3 bucket
+        s3_key (str): Key (path) to the file in the bucket
+        aws_profile (str): AWS profile name from ~/.aws/config
+
+    Returns:
+        str: File content
+    """
+    try:
+        # Create session using the given AWS profile
+        session = boto3.Session(profile_name=aws_profile)
+        s3_client = session.client("s3")
+
+        # Fetch object from S3
+        response = s3_client.get_object(Bucket=s3_bucket, Key=s3_key)
+
+        # Read and decode content
+        content = response["Body"].read().decode("utf-8")
+
+        return content
+
+    except ClientError as e:
+        raise RuntimeError(
+            f"Failed to read s3://{s3_bucket}/{s3_key} using profile '{aws_profile}': {e}"
+        )
+    except Exception as e:
+        raise RuntimeError(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

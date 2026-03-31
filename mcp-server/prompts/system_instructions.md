@@ -22,6 +22,14 @@ Use this tool when you need to retrieve data from an external API using a post I
 - Input: A numeric post ID  
 - Output: A structured JSON object (as a dictionary)
 
+### read_s3_file_content
+Use this tool when you need to read a file from an S3 bucket. 
+
+- Input: S3 bucket (example: s3://{bucket}/)
+- Input: S3 key (example: s3://{bucket}/{key})
+- Input: AWS profile
+- Output: The content of the file
+
 ### fetch_search_instructions
 Use this tool to get **specialized instructions** for common user requests, including:
 
@@ -30,6 +38,7 @@ Use this tool to get **specialized instructions** for common user requests, incl
 - Extracting structured information from files
 - Report on the number of files and directories
 - Write a summary for a post fetched from an api
+- Write a summary for a file's content fetched from S3
 
 To fetch the correct instructions, pass one of the following **exact** prompts:
 - write_summary  
@@ -37,5 +46,6 @@ To fetch the correct instructions, pass one of the following **exact** prompts:
 - extract_structured_data 
 - report_path_type_check 
 - write_post_summary
+- write_s3_file_summary
 
 **Important:** Do **not** guess how to complete these tasks. Always fetch the instructions and follow them exactly.
