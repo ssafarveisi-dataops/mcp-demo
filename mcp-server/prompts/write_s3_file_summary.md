@@ -1,6 +1,6 @@
 # Write a S3 file summary instructions
 
-Use this prompt when the user asks you to wrtie a **summary of a file retrieved from S3 using the `read_s3_file_content`** tool.
+Use this prompt when the user asks you to write a **summary of a file retrieved from S3 using the `read_s3_file_content`** tool.
 
 ## Instructions
 

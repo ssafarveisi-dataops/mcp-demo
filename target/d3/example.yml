@@ -1,2 +1,2 @@
-apiVerion: v0.1.0
+apiVersion: v0.1.0
 applicationFile: s3://bucket/app.py
