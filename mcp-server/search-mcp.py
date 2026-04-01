@@ -93,7 +93,7 @@ def fetch_search_instructions(prompt_name: str) -> str:
         - generate_documentation
         - extract_structured_data
         - report_path_type_check
-        - write_post_summary
+        - write_posts_summary
         - write_s3_file_summary
 
     Returns:
@@ -184,7 +184,7 @@ def check_path_type(paths: list[str]) -> dict:
     return result
 
 
-async def fetch_single_post(client: httpx.AsyncClient, post_id: int) -> dict:
+async def _fetch_single_post(client: httpx.AsyncClient, post_id: int) -> dict:
     url = f"https://jsonplaceholder.typicode.com/posts/{post_id}"
 
     try:
@@ -214,7 +214,7 @@ async def fetch_posts(request: PostRequest) -> dict:
     """
 
     async with httpx.AsyncClient() as client:
-        tasks = [fetch_single_post(client, post.post_id) for post in request.posts]
+        tasks = [_fetch_single_post(client, post.post_id) for post in request.posts]
 
         results = await asyncio.gather(*tasks)
 
