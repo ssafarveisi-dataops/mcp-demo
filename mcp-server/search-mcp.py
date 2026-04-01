@@ -264,5 +264,30 @@ def desktop_directory() -> list[str]:
     return [str(p) for p in desktop.iterdir() if p.is_dir()]
 
 
+@mcp.tool()
+def write_posts_to_file(posts: PostResponse) -> str:
+    """
+    Write a list of posts to a file on the desktop
+    """
+    desktop = Path.home() / "Desktop"
+    file_name = desktop / "posts_summary.txt"
+
+    with open(file_name, "w", encoding="utf-8") as f:
+        for post in posts.results:
+            if isinstance(post, PostSuccess):
+                data = post.data
+                f.write(f"Post ID: {data.get('id')}\n")
+                f.write(f"Title: {data.get('title')}\n")
+                f.write(f"Body: {data.get('body')}\n")
+                f.write("-" * 40 + "\n")
+
+            elif isinstance(post, PostError):
+                f.write(f"Post ID: {post.post_id}\n")
+                f.write(f"Error: {post.error}\n")
+                f.write("-" * 40 + "\n")
+
+    return str(file_name)
+
+
 if __name__ == "__main__":
     mcp.run(transport="stdio")

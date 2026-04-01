@@ -70,6 +70,10 @@ Use this tool when you need to retrieve data from an external API for **multiple
 * The order of results matches the processed (deduplicated) input
 
 
+### write_posts_to_file
+
+Use this tool when you need to write the fetched posts to a file 
+
 ### read_s3_file_content
 Use this tool when you need to read a file from an S3 bucket. 
 
