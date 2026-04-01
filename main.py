@@ -25,7 +25,7 @@ async def main():
         name="Search MCP Server",
         params={
             "command": "uv",
-            "args": ["run", "mcp-server/search-mcp.py"],
+            "args": ["run", "python", "mcp-server/search-mcp.py"],
             "env": env_vars,
         },
     ) as server:

@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "search-mcp": {
+      "command": "/opt/homebrew/bin/uv",
+      "args": [
+        "run",
+        "--directory",
+        "/Users/safarveisi/Desktop/mcp-demo",
+        "--frozen",
+        "mcp",
+        "run",
+        "mcp-server/search-mcp.py"
+      ]
+    }
+  },
+  "preferences": {
+    "coworkScheduledTasksEnabled": false,
+    "ccdScheduledTasksEnabled": false,
+    "sidebarMode": "chat",
+    "coworkWebSearchEnabled": true
+  }
+}
