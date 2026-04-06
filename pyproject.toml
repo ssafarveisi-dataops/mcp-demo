@@ -6,7 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.42.79",
+    "crewai-tools>=1.6.1",
     "httpx>=0.28.1",
+    "ipykernel>=7.2.0",
+    "langchain[openai]>=1.2.15",
+    "langgraph>=1.1.6",
     "mcp[cli]>=1.26.0",
     "openai>=2.30.0",
     "openai-agents>=0.13.2",
