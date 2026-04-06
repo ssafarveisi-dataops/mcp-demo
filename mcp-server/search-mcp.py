@@ -205,7 +205,7 @@ async def _fetch_single_post(client: httpx.AsyncClient, post_id: int) -> dict:
         return PostError(post_id=post_id, error=f"Request failed: {str(e)}").dict()
 
 
-# Tool: fetch_post_by_id
+# Tool: fetch_posts
 @mcp.tool()
 async def fetch_posts(request: PostRequest) -> dict:
     """
@@ -263,7 +263,7 @@ def desktop_directory() -> list[str]:
     desktop = Path.home() / "Desktop"
     return [str(p) for p in desktop.iterdir() if p.is_dir()]
 
-
+# Tool: write_posts_to_file
 @mcp.tool()
 def write_posts_to_file(posts: PostResponse) -> str:
     """
