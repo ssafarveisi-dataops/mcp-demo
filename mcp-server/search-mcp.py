@@ -263,6 +263,7 @@ def desktop_directory() -> list[str]:
     desktop = Path.home() / "Desktop"
     return [str(p) for p in desktop.iterdir() if p.is_dir()]
 
+
 # Tool: write_posts_to_file
 @mcp.tool()
 def write_posts_to_file(posts: PostResponse) -> str:
