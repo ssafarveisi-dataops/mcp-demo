@@ -32,7 +32,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-cache
 
 # Copy application code
-COPY aws_bedrock_agentcore/bedrock_agent.py ./
+COPY aws_bedrock_agentcore/dummy_agent.py ./
 
 # ---- Create non-root user ----
 RUN useradd -m -u 10001 appuser
@@ -47,4 +47,4 @@ USER appuser
 EXPOSE 8080
 
 # Run application
-CMD ["uv", "run", "python", "bedrock_agent.py"]
+CMD ["uv", "run", "python", "dummy_agent.py"]
