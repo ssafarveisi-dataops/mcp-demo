@@ -50,7 +50,7 @@ resource "aws_iam_role_policy" "sfn_s3_policy" {
   })
 }
 
-# Bedrock AgentCore Runtime invoke permission
+# Bedrock AgentCore Runtime permissions for invoking and managing agent sessions
 resource "aws_iam_role_policy" "sfn_bedrock_policy" {
   name = "${local.resource_prefix}-strands-agent-bedrock-policy"
   role = aws_iam_role.sfn_policy.id
