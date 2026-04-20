@@ -2,7 +2,7 @@
   "Comment": "Demo Step Function",
   "StartAt": "ExtractMessage",
   "States": {
-   "ExtractMessage": {
+    "ExtractMessage": {
       "Type": "Pass",
       "Parameters": {
         "message.$": "$[0]"
@@ -16,7 +16,29 @@
         "parsed.$": "States.StringToJson($.message.body)"
       },
       "ResultPath": "$",
-      "Next": "ProcessData"
+      "Next": "ValidateInput"
+    },
+    "ValidateInput": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.parsed.Records[0].s3.bucket.name",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.parsed.Records[0].s3.object.key",
+              "IsPresent": true
+            }
+          ],
+          "Next": "ProcessData"
+        }
+      ],
+      "Default": "SkipExecution"
+    },
+    "SkipExecution": {
+      "Type": "Succeed"
     },
     "ProcessData": {
       "Type": "Map",
