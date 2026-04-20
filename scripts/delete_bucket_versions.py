@@ -10,6 +10,10 @@ def delete_all_versions(bucket_name: str) -> None:
     s3 = session.resource("s3", region_name=REGION)
 
     bucket = s3.Bucket(bucket_name)
+    confirm = input(f"Delete ALL objects in '{args.bucket}'? (yes/no): ")
+    if confirm.lower() != "yes":
+        print("Aborted.")
+        return
 
     print(f"Deleting all object versions in bucket: {bucket_name}")
     bucket.object_versions.delete()
@@ -25,8 +29,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    confirm = input(f"Delete ALL objects in '{args.bucket}'? (yes/no): ")
-    if confirm.lower() != "yes":
-        print("Aborted.")
-        return
     delete_all_versions(args.bucket)
