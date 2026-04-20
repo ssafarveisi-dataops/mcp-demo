@@ -7,9 +7,11 @@ from bedrock_agentcore.runtime import BedrockAgentCoreApp
 app = BedrockAgentCoreApp()
 log = app.logger
 
+
 class RequestModel(BaseModel):
     id: str = Field(..., description="Unique identifier for the request")
     prompt: str = Field(..., min_length=1, description="Input prompt for the agent")
+
 
 @app.entrypoint
 async def invoke(payload, context):
@@ -25,7 +27,7 @@ async def invoke(payload, context):
         return {
             "error": "Invalid input",
             "details": e.errors(),
-            "request_uuid": request_uuid
+            "request_uuid": request_uuid,
         }
 
     log.info(f"Processing id={data.id}")
@@ -33,8 +35,9 @@ async def invoke(payload, context):
     return {
         "id": data.id,
         "prompt": data.prompt,
-        "response": f"Agent worked successfully for id={data.id} (request_uuid={request_uuid})"
+        "response": f"Agent worked successfully for id={data.id} (request_uuid={request_uuid})",
     }
+
 
 if __name__ == "__main__":
     app.run()
