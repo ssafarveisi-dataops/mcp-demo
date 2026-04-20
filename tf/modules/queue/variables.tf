@@ -3,7 +3,7 @@ variable "resource_prefix" {
   type        = string
 }
 
-variable "sqs_queue_arn" {
-  description = "Arn of the SQS queue"
+variable "bucket_notification_policy" {
+  description = "The S3 notification policy for the SQS queue"
   type        = string
 }

@@ -17,4 +17,10 @@ I have created a Bedrock AgentCore runtime in `search_agent.ipynb` (Bedrock Agen
 
 Here, the idea is to invoke the runtime using an AWS step function when a `jsonl` file is uploaded into a S3 bucket. The resources to create a step function are located in `tf` directory.
 
+### Using Eventbrige to invoke the step function
+
 ![example](./assets/step_function.png)
+
+### Using Eventbridge pipes to invoke the step function
+
+![example](./assets/eventbridge_pipes.png)

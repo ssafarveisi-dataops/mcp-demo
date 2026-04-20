@@ -3,7 +3,12 @@ output "sfn_role_arn" {
   value       = aws_iam_role.sfn_policy.arn
 }
 
-output "eventbridge_sfn_role_arn" {
-  description = "ARN of the EventBridge role for Step Functions"
-  value       = aws_iam_role.eventbridge_sfn_role.arn
+output "pipe_role_arn" {
+  description = "ARN of the Pipes execution role"
+  value       = aws_iam_role.pipes_sqs_role.arn
+}
+
+output "bucket_notification_policy" {
+  description = "The SQS queue policy for S3 bucket notifications"
+  value       = data.aws_iam_policy_document.queue.json
 }

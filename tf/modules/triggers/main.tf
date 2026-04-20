@@ -1,27 +1,22 @@
-resource "aws_cloudwatch_event_rule" "s3_upload_trigger" {
-  name        = "${var.resource_prefix}-s3-upload-trigger"
-  description = "Trigger Step Functions workflow when .jsonl file is uploaded to input bucket"
-
-  event_pattern = jsonencode({
-    source      = ["aws.s3"]
-    detail-type = ["Object Created"]
-    detail = {
-      bucket = {
-        name = [var.input_bucket_name]
-      }
-      object = {
-        key = [{
-          suffix = ".jsonl"
-        }]
-      }
-    }
-  })
+resource "aws_cloudwatch_log_group" "pipe_log_group" {
+  name = "/aws/vendedlogs/pipes/${var.resource_prefix}-eventbridge-to-sfn"
 }
 
-resource "aws_cloudwatch_event_target" "workflow_trigger" {
-  rule       = aws_cloudwatch_event_rule.s3_upload_trigger.name
-  target_id  = "${var.resource_prefix}-workflow-trigger"
-  arn        = var.sfn_workflow_arn
-  role_arn   = var.eventbridge_sfn_role
-  input_path = "$.detail"
+resource "aws_pipes_pipe" "event_bridge_to_sfn" {
+  name     = "${var.resource_prefix}-pipe-eventbridge-to-sfn"
+  role_arn = var.pipe_role_arn
+  source   = var.pipe_source_arn
+  target   = var.pipe_target_arn
+  log_configuration {
+    include_execution_data = ["ALL"]
+    level                  = "ERROR"
+    cloudwatch_logs_log_destination {
+      log_group_arn = aws_cloudwatch_log_group.pipe_log_group.arn
+    }
+  }
+  target_parameters {
+    step_function_state_machine_parameters {
+      invocation_type = "FIRE_AND_FORGET"
+    }
+  }
 }

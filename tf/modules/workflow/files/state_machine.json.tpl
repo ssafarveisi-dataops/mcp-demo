@@ -1,7 +1,23 @@
 {
   "Comment": "Demo Step Function",
-  "StartAt": "ProcessData",
+  "StartAt": "ExtractMessage",
   "States": {
+   "ExtractMessage": {
+      "Type": "Pass",
+      "Parameters": {
+        "message.$": "$[0]"
+      },
+      "ResultPath": "$",
+      "Next": "ParseBody"
+    },
+    "ParseBody": {
+      "Type": "Pass",
+      "Parameters": {
+        "parsed.$": "States.StringToJson($.message.body)"
+      },
+      "ResultPath": "$",
+      "Next": "ProcessData"
+    },
     "ProcessData": {
       "Type": "Map",
       "ItemReader": {
@@ -10,8 +26,8 @@
           "InputType": "JSONL"
         },
         "Parameters": {
-          "Bucket.$": "$.bucket.name",
-          "Key.$": "$.object.key"
+          "Bucket.$": "$.parsed.Records[0].s3.bucket.name",
+          "Key.$": "$.parsed.Records[0].s3.object.key"
         }
       },
       "MaxConcurrency": ${max_concurrency},

@@ -130,45 +130,6 @@ resource "aws_iam_role_policy" "sfn_xray_policy" {
   })
 }
 
-# EventBridge role for triggering Step Functions
-resource "aws_iam_role" "eventbridge_sfn_role" {
-  name = "${local.resource_prefix}-eventbridge-sfn-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "events.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-# EventBridge policy to start Step Functions executions
-resource "aws_iam_role_policy" "eventbridge_sfn_policy" {
-  name = "${local.resource_prefix}-eventbridge-sfn-policy"
-  role = aws_iam_role.eventbridge_sfn_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "states:StartExecution"
-        ]
-        Resource = [
-          "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:${local.resource_prefix}-*"
-        ]
-      }
-    ]
-  })
-}
-
 # Step Functions execution permissions for Distributed Map state
 resource "aws_iam_role_policy" "sfn_execution_policy" {
   name = "${local.resource_prefix}-strands-agent-execution-policy"
@@ -187,6 +148,63 @@ resource "aws_iam_role_policy" "sfn_execution_policy" {
         Resource = [
           "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:${local.resource_prefix}-*",
           "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:execution:${local.resource_prefix}-*:*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "pipes_sqs_role" {
+  name = "${local.resource_prefix}-pipes-sqs-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "pipes.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# Policy for Pipes to read from SQS
+resource "aws_iam_role_policy" "source" {
+  role = aws_iam_role.pipes_sqs_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+        ],
+        Resource = [
+          "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.resource_prefix}-*",
+        ]
+      },
+    ]
+  })
+}
+
+# Permissions for Pipes to start Step Functions executionons when processing messages from SQS
+resource "aws_iam_role_policy" "target" {
+  role = aws_iam_role.pipes_sqs_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "states:StartExecution"
+        ]
+        Resource = [
+          "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:${local.resource_prefix}-*"
         ]
       }
     ]
