@@ -2,8 +2,3 @@ variable "resource_prefix" {
   description = "Prefix for all resource names"
   type        = string
 }
-
-variable "sqs_queue_arn" {
-  description = "Arn of the SQS queue"
-  type        = string
-}

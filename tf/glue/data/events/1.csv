@@ -1,0 +1,7 @@
+event_type,event_timestamp
+login,2026-05-01T09:00:00Z
+logout,2026-05-01T09:30:00Z
+file_upload,2026-05-01T10:15:23Z
+file_download,2026-05-01T10:20:10Z
+error,2026-05-01T11:05:45Z
+login,2026-05-01T12:00:00Z

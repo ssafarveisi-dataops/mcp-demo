@@ -3,7 +3,7 @@ variable "resource_prefix" {
   type        = string
 }
 
-variable "bucket_notification_policy" {
-  description = "The S3 notification policy for the SQS queue"
+variable "sqs_eventbridge_policy" {
+  description = "IAM policy that allows EventBridge to send messages to the SQS queue"
   type        = string
 }

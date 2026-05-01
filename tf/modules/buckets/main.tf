@@ -11,12 +11,8 @@ resource "aws_s3_bucket_versioning" "input_bucket" {
 }
 
 resource "aws_s3_bucket_notification" "input_bucket" {
-  bucket = aws_s3_bucket.input_bucket.id
-  queue {
-    queue_arn     = var.sqs_queue_arn
-    events        = ["s3:ObjectCreated:*"]
-    filter_suffix = ".jsonl"
-  }
+  bucket      = aws_s3_bucket.input_bucket.id
+  eventbridge = true
 }
 
 resource "aws_s3_bucket" "output_bucket" {

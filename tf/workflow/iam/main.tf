@@ -1,5 +1,5 @@
 # Trust policy for Step Functions to assume the role and execute the state machine
-resource "aws_iam_role" "sfn_policy" {
+resource "aws_iam_role" "sfn_role" {
   name = "${local.resource_prefix}-strands-agent-policy"
 
   assume_role_policy = jsonencode({
@@ -19,7 +19,7 @@ resource "aws_iam_role" "sfn_policy" {
 # S3 permissions for reading input data and writing output data
 resource "aws_iam_role_policy" "sfn_s3_policy" {
   name = "${local.resource_prefix}-strands-agent-s3-policy"
-  role = aws_iam_role.sfn_policy.id
+  role = aws_iam_role.sfn_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -53,7 +53,7 @@ resource "aws_iam_role_policy" "sfn_s3_policy" {
 # Bedrock AgentCore Runtime permissions for invoking and managing agent sessions
 resource "aws_iam_role_policy" "sfn_bedrock_policy" {
   name = "${local.resource_prefix}-strands-agent-bedrock-policy"
-  role = aws_iam_role.sfn_policy.id
+  role = aws_iam_role.sfn_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -75,7 +75,7 @@ resource "aws_iam_role_policy" "sfn_bedrock_policy" {
 # CloudWatch Logs permissions for Step Functions logging
 resource "aws_iam_role_policy" "sfn_cloudwatch_logs_policy" {
   name = "${local.resource_prefix}-strands-agent-logs-policy"
-  role = aws_iam_role.sfn_policy.id
+  role = aws_iam_role.sfn_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -113,7 +113,7 @@ resource "aws_iam_role_policy" "sfn_cloudwatch_logs_policy" {
 # X-Ray permissions for distributed tracing
 resource "aws_iam_role_policy" "sfn_xray_policy" {
   name = "${local.resource_prefix}-strands-agent-xray-policy"
-  role = aws_iam_role.sfn_policy.id
+  role = aws_iam_role.sfn_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -133,7 +133,7 @@ resource "aws_iam_role_policy" "sfn_xray_policy" {
 # Step Functions execution permissions for Distributed Map state
 resource "aws_iam_role_policy" "sfn_execution_policy" {
   name = "${local.resource_prefix}-strands-agent-execution-policy"
-  role = aws_iam_role.sfn_policy.id
+  role = aws_iam_role.sfn_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -154,8 +154,8 @@ resource "aws_iam_role_policy" "sfn_execution_policy" {
   })
 }
 
-resource "aws_iam_role" "pipes_sqs_role" {
-  name = "${local.resource_prefix}-pipes-sqs-role"
+resource "aws_iam_role" "lambda_role" {
+  name = "${local.resource_prefix}-lambda-sfn-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -164,16 +164,36 @@ resource "aws_iam_role" "pipes_sqs_role" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "pipes.amazonaws.com"
+          Service = "lambda.amazonaws.com"
         }
       }
     ]
   })
 }
 
-# Policy for Pipes to read from SQS
+resource "aws_iam_role_policy" "lambda_basic_execution" {
+  name = "${local.resource_prefix}-lambda-logging-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.resource_prefix}-invoke-step-function:*"
+      }
+    ]
+  })
+}
+
+# Policy for Lambda to read/delete from SQS
 resource "aws_iam_role_policy" "source" {
-  role = aws_iam_role.pipes_sqs_role.id
+  role = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -192,19 +212,57 @@ resource "aws_iam_role_policy" "source" {
   })
 }
 
-# Permissions for Pipes to start Step Functions executionons when processing messages from SQS
+# Permissions for Lambda to start Step Functions executions
 resource "aws_iam_role_policy" "target" {
-  role = aws_iam_role.pipes_sqs_role.id
+  role = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
         Action = [
-          "states:StartExecution"
+          "states:StartExecution",
+          "states:ListExecutions"
         ]
         Resource = [
           "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:${local.resource_prefix}-*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "eventbridge_role" {
+  name = "${local.resource_prefix}-eventbridge-sqs-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "events.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "eventbridge_sqs_policy" {
+  name = "${local.resource_prefix}-eventbridge-sqs-policy"
+  role = aws_iam_role.eventbridge_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage"
+        ]
+        Resource = [
+          "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.resource_prefix}-*",
         ]
       }
     ]

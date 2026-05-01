@@ -15,11 +15,6 @@ variable "max_concurrency" {
   default     = 10
 }
 
-variable "role_arn" {
-  description = "Role ARN for the state machine"
-  type        = string
-}
-
 variable "output_bucket" {
   description = "Output bucket name for the state machine"
   type        = string

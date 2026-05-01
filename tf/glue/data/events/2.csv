@@ -1,0 +1,7 @@
+event_type,event_timestamp
+signup,2026-05-02T08:12:34Z
+email_verification,2026-05-02T08:15:10Z
+login,2026-05-02T08:20:55Z
+password_change,2026-05-02T09:05:42Z
+file_upload,2026-05-02T09:30:00Z
+logout,2026-05-02T09:45:18Z

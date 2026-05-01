@@ -1,45 +1,7 @@
 {
   "Comment": "Demo Step Function",
-  "StartAt": "ExtractMessage",
+  "StartAt": "ProcessData",
   "States": {
-    "ExtractMessage": {
-      "Type": "Pass",
-      "Parameters": {
-        "message.$": "$[0]"
-      },
-      "ResultPath": "$",
-      "Next": "ParseBody"
-    },
-    "ParseBody": {
-      "Type": "Pass",
-      "Parameters": {
-        "parsed.$": "States.StringToJson($.message.body)"
-      },
-      "ResultPath": "$",
-      "Next": "ValidateInput"
-    },
-    "ValidateInput": {
-      "Type": "Choice",
-      "Choices": [
-        {
-          "And": [
-            {
-              "Variable": "$.parsed.Records[0].s3.bucket.name",
-              "IsPresent": true
-            },
-            {
-              "Variable": "$.parsed.Records[0].s3.object.key",
-              "IsPresent": true
-            }
-          ],
-          "Next": "ProcessData"
-        }
-      ],
-      "Default": "SkipExecution"
-    },
-    "SkipExecution": {
-      "Type": "Succeed"
-    },
     "ProcessData": {
       "Type": "Map",
       "ItemReader": {
@@ -48,12 +10,12 @@
           "InputType": "JSONL"
         },
         "Parameters": {
-          "Bucket.$": "$.parsed.Records[0].s3.bucket.name",
-          "Key.$": "$.parsed.Records[0].s3.object.key"
+          "Bucket.$": "$.bucket.name",
+          "Key.$": "$.object.key"
         }
       },
       "MaxConcurrency": ${max_concurrency},
-      "ToleratedFailurePercentage": 5,
+      "ToleratedFailurePercentage": 25,
       "ItemProcessor": {
         "ProcessorConfig": {
           "Mode": "DISTRIBUTED",
