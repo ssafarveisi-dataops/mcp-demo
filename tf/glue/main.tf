@@ -1,3 +1,11 @@
+# Upload the spark application source code to S3
+resource "aws_s3_object" "source_code" {
+  bucket = "demo-glue-etl-pyspark-scripts"
+  key    = "jobs/transform_events.py"
+  source = "${path.module}/scripts/transform_events.py"
+  etag   = filemd5("${path.module}/scripts/transform_events.py")
+}
+
 resource "aws_glue_catalog_database" "main" {
   name        = "${local.resource_prefix}-data-lake"
   description = "Demo data lake catalog"

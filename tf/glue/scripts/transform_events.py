@@ -43,4 +43,5 @@ transformed.write \
     .partitionBy("event_year", "event_month", "event_day") \
     .csv(args["output_path"], header=True)
 
+# Submit the job
 job.commit()
