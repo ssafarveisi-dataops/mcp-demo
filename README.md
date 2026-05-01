@@ -19,8 +19,18 @@ Here, the idea is to invoke the runtime using an AWS step function when a `jsonl
 
 ### Using Eventbrige to invoke the step function
 
+#### Version 1
+
 ![example](./assets/step_function.png)
 
-### Using Eventbridge pipes to invoke the step function
+#### Version 2
 
 ![example](./assets/eventbridge_pipes.png)
+
+#### version 3
+
+![example](./assets/agentcore.png)
+
+### Glue job (Spark)
+
+![example](./assets/glue.png)
