@@ -66,6 +66,7 @@ resource "aws_glue_job" "transform_events" {
   }
 
   glue_version      = "4.0"
+  execution_class   = "FLEX"
   worker_type       = "G.1X" # 4 vCPU, 16 GB RAM per worker
   number_of_workers = 2
   timeout           = 60 # minutes
