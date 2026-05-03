@@ -33,4 +33,10 @@ Here, the idea is to invoke the runtime using an AWS step function when a `jsonl
 
 ### Glue job (Spark)
 
+#### Version 1
+
 ![example](./assets/glue.png)
+
+#### Version 2
+
+![example](./assets/step_glue.png)
