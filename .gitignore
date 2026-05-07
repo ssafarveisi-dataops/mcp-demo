@@ -11,3 +11,4 @@ wheels/
 .env
 archived/
 .terraform
+.metaflow
