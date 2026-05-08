@@ -56,9 +56,7 @@ class DemoMetaflowWorkflow(FlowSpec):
     @step
     def end(self):
         """
-        The 'end' step is a regular step, so runs locally on the machine from
-        which the flow is executed.
-
+        Last step
         """
         # Demonstrate object persistence across steps via AWS S3
         print(self.df_transformed)
