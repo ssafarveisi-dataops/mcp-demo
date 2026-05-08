@@ -155,7 +155,7 @@ resource "aws_batch_job_queue" "metaflow_batch_job_queue" {
   }
 }
 
-resource "aws_iam_role" "iam_s3_access_role" {
+resource "aws_iam_role" "iam_metaflow_access_role" {
   name               = "metaflow_iam_role"
   assume_role_policy = <<EOF
 {
@@ -169,8 +169,7 @@ resource "aws_iam_role" "iam_s3_access_role" {
           "ec2.amazonaws.com",
           "ecs.amazonaws.com",
           "ecs-tasks.amazonaws.com",
-          "batch.amazonaws.com",
-          "s3.amazonaws.com"
+          "batch.amazonaws.com"
         ]
       },
       "Action": "sts:AssumeRole"
@@ -184,25 +183,51 @@ EOF
   }
 }
 
-resource "aws_iam_role_policy" "iam_metaflow_s3_access_policy" {
+resource "aws_iam_role_policy" "iam_metaflow_access_policy" {
   name = "metaflow_s3_access"
-  role = aws_iam_role.iam_s3_access_role.name
+  role = aws_iam_role.iam_metaflow_access_role.name
 
   policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-        "Sid": "ListObjectsInMetaflowBucket",
-        "Effect": "Allow",
-        "Action": ["s3:*"],
-        "Resource": ["${aws_s3_bucket.metaflow.arn}", "${aws_s3_bucket.metaflow.arn}/*"]
+      "Sid": "ListObjectsInMetaflowBucket",
+      "Effect": "Allow",
+      "Action": ["s3:*"],
+      "Resource": [
+        "${aws_s3_bucket.metaflow.arn}",
+        "${aws_s3_bucket.metaflow.arn}/*"
+      ]
     },
     {
-        "Sid": "ListObjectsInArbitraryBucket",
-        "Effect": "Allow",
-        "Action": ["s3:*"],
-        "Resource": ["arn:aws:s3:::${var.arbitrary_s3_bucket_name}", "arn:aws:s3:::${var.arbitrary_s3_bucket_name}/*"]
+      "Sid": "ListObjectsInArbitraryBucket",
+      "Effect": "Allow",
+      "Action": ["s3:*"],
+      "Resource": [
+        "arn:aws:s3:::${var.arbitrary_s3_bucket_name}",
+        "arn:aws:s3:::${var.arbitrary_s3_bucket_name}/*"
+      ]
+    },
+    {
+      "Sid": "ECRTokenAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRPullAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchCheckLayerAvailability"
+      ],
+      "Resource": [
+        "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/science-dev-demo-metaflow"
+      ]
     }
   ]
 }

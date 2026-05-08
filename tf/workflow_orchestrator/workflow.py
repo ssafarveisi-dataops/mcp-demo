@@ -7,8 +7,8 @@ class DemoMetaflowWorkflow(FlowSpec):
     bucket = Parameter('bucket', help='The S3 bucket where the json file is')
     key = Parameter('key', help='The S3 key that points to a json file')
 
-    # Or the image pushed to AWS ECR
-    @batch(image="python:3.12")
+    # Image pushed to AWS ECR (built with linux/amd64 platform)
+    @batch(image="463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow:latest")
     @retry(times=2, minutes_between_retries=1)
     @step(start=True)
     def read_raw_csv_file(self):
