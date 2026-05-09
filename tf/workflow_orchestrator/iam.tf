@@ -61,8 +61,7 @@ resource "aws_iam_role" "aws_batch_service_role" {
         "Effect" : "Allow",
         "Principal" : {
           "Service" : [
-            "batch.amazonaws.com",
-            "s3.amazonaws.com"
+            "batch.amazonaws.com"
           ]
         }
       }
@@ -238,28 +237,6 @@ data "aws_iam_policy_document" "step_functions_batch_policy" {
   }
 }
 
-data "aws_iam_policy_document" "step_functions_s3" {
-  statement {
-    actions = [
-      "s3:ListBucket"
-    ]
-
-    resources = [
-      aws_s3_bucket.metaflow.arn
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:*Object"
-    ]
-
-    resources = [
-      aws_s3_bucket.metaflow.arn, "${aws_s3_bucket.metaflow.arn}/*"
-    ]
-  }
-}
-
 data "aws_iam_policy_document" "step_functions_cloudwatch" {
   statement {
     actions = [
@@ -336,12 +313,6 @@ resource "aws_iam_role_policy" "step_functions_batch" {
   name   = "aws_batch"
   role   = aws_iam_role.step_functions_role.id
   policy = data.aws_iam_policy_document.step_functions_batch_policy.json
-}
-
-resource "aws_iam_role_policy" "step_functions_s3" {
-  name   = "s3"
-  role   = aws_iam_role.step_functions_role.id
-  policy = data.aws_iam_policy_document.step_functions_s3.json
 }
 
 resource "aws_iam_role_policy" "step_functions_cloudwatch" {
