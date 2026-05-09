@@ -87,3 +87,9 @@ variable "arbitrary_s3_bucket_name" {
   type        = string
   default     = "demo-data-lake-glue-etl"
 }
+
+variable "metaflow_iam_role_name" {
+  description = "Name of the metaflow IAM role that allows interacting with S3, ECR, etc."
+  type        = string
+  default     = "metaflow_iam_role"
+}

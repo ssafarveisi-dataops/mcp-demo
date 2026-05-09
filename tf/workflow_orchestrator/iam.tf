@@ -80,7 +80,7 @@ resource "aws_iam_role_policy_attachment" "aws_batch_service_role" {
 }
 
 resource "aws_iam_role" "iam_metaflow_access_role" {
-  name               = "metaflow_iam_role"
+  name               = var.metaflow_iam_role_name
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",

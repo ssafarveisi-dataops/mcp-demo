@@ -17,6 +17,7 @@
 | <a name="input_dynamodb_name"></a> [dynamodb\_name](#input\_dynamodb\_name) | name of the AWS Dynamo DB | `string` | `"metaflow"` | no |
 | <a name="input_ecs_instance_role_name"></a> [ecs\_instance\_role\_name](#input\_ecs\_instance\_role\_name) | Name of the ECS IAM instance role | `string` | `"metaflow_ecs_instance_role"` | no |
 | <a name="input_eventbridge_role_name"></a> [eventbridge\_role\_name](#input\_eventbridge\_role\_name) | name of the eventbridge role | `string` | `"metaflow_eventbridge_role"` | no |
+| <a name="input_metaflow_iam_role_name"></a> [metaflow\_iam\_role\_name](#input\_metaflow\_iam\_role\_name) | Name of the metaflow IAM role that allows interacting with S3, ECR, etc. | `string` | `"metaflow_iam_role"` | no |
 | <a name="input_step_functions_role_name"></a> [step\_functions\_role\_name](#input\_step\_functions\_role\_name) | name of the step function role | `string` | `"metaflow_step_functions_role"` | no |
 
 ## Outputs
