@@ -1,40 +1,38 @@
 resource "aws_iam_role" "spot_fleet_role" {
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": [
-          "spotfleet.amazonaws.com"
-        ]
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = [
+            "spotfleet.amazonaws.com"
+          ]
+        }
       }
-    }
-  ]
-}
-EOF
+    ]
+  })
 }
 
 # Create IAM role for ECS instances
 resource "aws_iam_role" "ecs_instance_role" {
   name = var.ecs_instance_role_name
 
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-    {
-        "Action": "sts:AssumeRole",
-        "Effect": "Allow",
-        "Principal": {
-        "Service": "ec2.amazonaws.com"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = [
+            "ec2.amazonaws.com"
+          ]
         }
-    }
+      }
     ]
-}
-EOF
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "spot_fleet_role" {
@@ -55,23 +53,21 @@ resource "aws_iam_instance_profile" "ecs_instance_role" {
 resource "aws_iam_role" "aws_batch_service_role" {
   name = var.batch_service_role_name
 
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-    {
-        "Action": "sts:AssumeRole",
-        "Effect": "Allow",
-        "Principal": {
-          "Service": [
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : [
             "batch.amazonaws.com",
             "s3.amazonaws.com"
           ]
         }
-    }
+      }
     ]
-}
-EOF
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "aws_batch_service_role" {
@@ -80,28 +76,24 @@ resource "aws_iam_role_policy_attachment" "aws_batch_service_role" {
 }
 
 resource "aws_iam_role" "iam_metaflow_access_role" {
-  name               = var.metaflow_iam_role_name
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": [
-          "ec2.amazonaws.com",
-          "ecs.amazonaws.com",
-          "ecs-tasks.amazonaws.com",
-          "batch.amazonaws.com"
-        ]
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOF
-
+  name = var.metaflow_iam_role_name
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = [
+            "ec2.amazonaws.com",
+            "ecs.amazonaws.com",
+            "ecs-tasks.amazonaws.com",
+            "batch.amazonaws.com"
+          ]
+        }
+      }
+    ]
+  })
   tags = {
     Metaflow = "true"
   }
@@ -111,51 +103,49 @@ resource "aws_iam_role_policy" "iam_metaflow_access_policy" {
   name = "metaflow_s3_access"
   role = aws_iam_role.iam_metaflow_access_role.name
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "ListObjectsInMetaflowBucket",
-      "Effect": "Allow",
-      "Action": ["s3:*"],
-      "Resource": [
-        "${aws_s3_bucket.metaflow.arn}",
-        "${aws_s3_bucket.metaflow.arn}/*"
-      ]
-    },
-    {
-      "Sid": "ListObjectsInArbitraryBucket",
-      "Effect": "Allow",
-      "Action": ["s3:*"],
-      "Resource": [
-        "arn:aws:s3:::${var.arbitrary_s3_bucket_name}",
-        "arn:aws:s3:::${var.arbitrary_s3_bucket_name}/*"
-      ]
-    },
-    {
-      "Sid": "ECRTokenAccess",
-      "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "ECRPullAccess",
-      "Effect": "Allow",
-      "Action": [
-        "ecr:BatchGetImage",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchCheckLayerAvailability"
-      ],
-      "Resource": [
-        "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/science-dev-demo-metaflow"
-      ]
-    }
-  ]
-}
-EOF
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ListObjectsInMetaflowBucket"
+        Effect = "Allow"
+        Action = ["s3:*"]
+        Resource = [
+          aws_s3_bucket.metaflow.arn,
+          "${aws_s3_bucket.metaflow.arn}/*"
+        ]
+      },
+      {
+        Sid    = "ListObjectsInArbitraryBucket"
+        Effect = "Allow"
+        Action = ["s3:*"]
+        Resource = [
+          "arn:aws:s3:::${var.arbitrary_s3_bucket_name}",
+          "arn:aws:s3:::${var.arbitrary_s3_bucket_name}/*"
+        ]
+      },
+      {
+        Sid    = "ECRTokenAccess"
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "ECRPullAccess"
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+        Resource = [
+          "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/science-dev-demo-metaflow"
+        ]
+      }
+    ]
+  })
 }
 
 data "aws_iam_policy_document" "eventbridge_assume_role_policy" {
