@@ -12,5 +12,8 @@ repos:
     rev: "v0.23.0"
     hooks:
       - id: terraform-docs-go
-        name: "Main terraform module docs"
+        name: "Workflow orchestrator terraform module docs"
         args: ["-c", "tf/workflow_orchestrator/.terraform-docs.yaml", "markdown", "tf/workflow_orchestrator"]
+      - id: terraform-docs-go
+        name: "Glue terraform module docs"
+        args: ["-c", "tf/glue/.terraform-docs.yaml", "markdown", "tf/glue"]
