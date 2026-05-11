@@ -12,3 +12,4 @@ wheels/
 archived/
 .terraform
 .metaflow
+*.zip

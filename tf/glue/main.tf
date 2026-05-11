@@ -97,3 +97,34 @@ resource "aws_cloudwatch_event_target" "workflow_trigger" {
   arn        = aws_sfn_state_machine.this.arn
   input_path = "$.detail"
 }
+
+resource "aws_cloudwatch_log_group" "lambda_log_group" {
+  name              = "/aws/lambda/construct-metaflow-input"
+  retention_in_days = 7
+}
+
+data "archive_file" "this" {
+  type        = "zip"
+  source_file = "${path.module}/lambda/construct.py"
+  output_path = "${path.module}/lambda/construct.zip"
+}
+
+resource "aws_lambda_function" "this" {
+  function_name    = "construct-metaflow-input"
+  filename         = data.archive_file.this.output_path
+  source_code_hash = data.archive_file.this.output_base64sha256
+  handler          = "construct.lambda_handler"
+  runtime          = "python3.12"
+  architectures    = ["x86_64"]
+
+  description                    = "Lambda function to construct input for Metaflow workflow"
+  memory_size                    = 128
+  timeout                        = 30
+  reserved_concurrent_executions = 1
+  role                           = aws_iam_role.lambda_role.arn
+
+  logging_config {
+    log_format = "JSON"
+  }
+  depends_on = [aws_cloudwatch_log_group.lambda_log_group]
+}

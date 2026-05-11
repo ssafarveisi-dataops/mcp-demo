@@ -188,3 +188,103 @@ resource "aws_iam_role_policy" "eventbridge_sfn" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "trigger_sfn_execution_policy" {
+  name = "trigger-sfn-execution-policy"
+  role = aws_iam_role.sfn_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "states:StartExecution"
+        ]
+        Resource = [
+          "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:Metaflow*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "states:DescribeExecution",
+          "states:StopExecution"
+        ]
+        Resource = [
+          "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:execution:Metaflow*:*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "events:PutTargets",
+          "events:PutRule",
+          "events:DescribeRule"
+        ]
+        Resource = [
+          "arn:aws:events:${var.aws_region}:${data.aws_caller_identity.current.account_id}:rule/StepFunctionsGetEventsForStepFunctionsExecutionRule"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "sfn_trigger_lambda_function" {
+  name = "sfn-trigger-lambda-function-policy"
+  role = aws_iam_role.sfn_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = [
+          "arn:aws:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:construct-metaflow-input"
+        ]
+      }
+    ]
+  })
+}
+
+# IAM role for Lambda execution
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "lambda_role" {
+  name               = "lambda_execution_role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+resource "aws_iam_role_policy" "lambda_basic_execution" {
+  name = "lambda-logging-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/construct-metaflow-input:*"
+      }
+    ]
+  })
+}

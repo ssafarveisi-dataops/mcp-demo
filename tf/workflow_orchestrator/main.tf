@@ -101,3 +101,45 @@ resource "aws_dynamodb_table" "step_functions_state_table" {
     Metaflow = "true"
   }
 }
+
+# resource "aws_cloudwatch_event_rule" "s3_upload_trigger" {
+#   name        = "metaflow-sfn-s3-upload-trigger"
+#   description = "Trigger Step Functions workflow when a csv file is uploaded to input bucket"
+
+#   event_pattern = jsonencode({
+#     source      = ["aws.s3"]
+#     detail-type = ["Object Created"]
+#     detail = {
+#       bucket = {
+#         name = ["demo-data-lake-glue-etl"]
+#       }
+#       object = {
+#         key = [
+#           {
+#             wildcard = "transformed/events/event_year=*/event_month=*/event_day=*/*.csv"
+#           }
+#         ]
+#       }
+#     }
+#   })
+# }
+
+# resource "aws_cloudwatch_event_target" "workflow_trigger" {
+#   rule      = aws_cloudwatch_event_rule.s3_upload_trigger.name
+#   target_id = "trigger-step-function"
+#   role_arn  = aws_iam_role.sfn_eventbridge_role.arn
+#   arn       = "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:DemoMetaflowWorkflow"
+
+#   input_transformer {
+#     input_paths = {
+#       bucket = "$.detail.bucket.name"
+#       key    = "$.detail.object.key"
+#     }
+
+#     input_template = <<EOF
+# {
+#   "Parameters": "{\"bucket\":\"<bucket>\",\"key\":\"<key>\"}"
+# }
+# EOF
+#   }
+# }

@@ -332,3 +332,40 @@ resource "aws_iam_role_policy" "step_functions_dynamodb" {
   role   = aws_iam_role.step_functions_role.id
   policy = data.aws_iam_policy_document.step_functions_dynamodb.json
 }
+
+# resource "aws_iam_role" "sfn_eventbridge_role" {
+#   name = "eventbridge-role"
+
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = "sts:AssumeRole"
+#         Effect = "Allow"
+#         Principal = {
+#           Service = "events.amazonaws.com"
+#         }
+#       }
+#     ]
+#   })
+# }
+
+# resource "aws_iam_role_policy" "eventbridge_sfn" {
+#   name = "eventbridge-sfn-policy"
+#   role = aws_iam_role.sfn_eventbridge_role.id
+
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "states:StartExecution"
+#         ]
+#         Resource = [
+#           "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:DemoMetaflowWorkflow"
+#         ]
+#       }
+#     ]
+#   })
+# }
