@@ -1,4 +1,6 @@
 import sys
+
+import pandas as pd
 from loguru import logger
 from metaflow import FlowSpec, step, batch, retry, Parameter, S3
 from custom import some_function
@@ -32,8 +34,6 @@ class MetaflowEvents(FlowSpec):
         """
         Reads csv files containing raw data from S3
         """
-        import pandas as pd
-
         # Execute some function from a custom module to demonstrate how to include custom code in the image and use it in the step function
         logger.info("Executing some_function from custom module...")
         some_function()
@@ -63,7 +63,7 @@ class MetaflowEvents(FlowSpec):
 
         logger.info("Finished reading raw CSV files. DataFrame shape: {}", self.df.shape)
 
-        self.next(self.preprocess)
+        self.next(self.preprocess, self.execute_sql)
 
     @batch(image="python:3.12", cpu=2, memory=5120)
     @step()
@@ -71,8 +71,6 @@ class MetaflowEvents(FlowSpec):
         """
         Runs preprocessing on the raw csv file fetched from S3
         """
-        import pandas as pd
-
         logger.info("Preprocessing pandas DataFrame with shape: {}", self.df.shape)
 
         df_to_preprocess = self.df
@@ -85,6 +83,35 @@ class MetaflowEvents(FlowSpec):
             self.df_preprocessed.shape,
         )
 
+        self.next(self.join)
+
+    @batch(image="python:3.12", cpu=1)
+    @step()
+    def execute_sql(self):
+        """
+        Executes SQL queries
+        """
+        logger.info("Loading SQL query from file...")
+        with open("sql/queries.sql", "r") as f:
+            self.sql_query = f.read()
+
+        logger.info("SQL query loaded:\n{}", self.sql_query)
+
+        self.next(self.join)
+
+    @batch(image="python:3.12", cpu=2, memory=5120)
+    @step()
+    def join(self, inputs):
+        """
+        Joins the results of the parallel steps preprocess and execute_sql
+        """
+        logger.info("Joining results from preprocess and execute_sql steps...")
+        for input in inputs:
+            if hasattr(input, "df_preprocessed"):
+                logger.info("Received preprocessed DataFrame with shape: {}", input.df_preprocessed.shape)
+            if hasattr(input, "sql_query"):
+                logger.info("Received SQL query:\n{}", input.sql_query)
+
         self.next(self.end)
 
     @batch(image="python:3.12")
@@ -93,8 +120,6 @@ class MetaflowEvents(FlowSpec):
         """
         Last step
         """
-        # Demonstrate object persistence across steps via AWS S3
-        logger.info("Preprocessed DataFrame preview:\n{}", self.df_preprocessed.head())
         logger.info("MetaflowEvents is finished.")
 
 
