@@ -11,7 +11,7 @@ logger.add(
     colorize=False,
     format=(
         "{time:YYYY-MM-DD HH:mm:ss} | "
-        "{level: <8} | "
+        "{level} | "
         "{name}:{function}:{line} | "
         "{message}"
     ),
