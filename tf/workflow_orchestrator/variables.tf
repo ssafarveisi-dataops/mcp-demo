@@ -10,12 +10,6 @@ variable "bucket_name_prefix" {
   default     = "metaflow"
 }
 
-variable "compute_environment_name" {
-  type        = string
-  description = "name of the AWS batch compute environment"
-  default     = "metaflow"
-}
-
 variable "dynamodb_name" {
   type        = string
   description = "name of the AWS Dynamo DB"
@@ -55,7 +49,7 @@ variable "batch_service_role_name" {
 variable "batch_instance_types" {
   type        = list(string)
   description = "EC2 instance types to use for AWS batch jobs"
-  default     = ["c4.large", "c4.xlarge", "c4.2xlarge", "c4.4xlarge", "c4.8xlarge"]
+  default     = ["c4.large", "c4.xlarge", "g4dn.xlarge", "g4dn.2xlarge"]
 }
 
 variable "batch_max_vcpu" {

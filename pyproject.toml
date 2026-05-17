@@ -5,28 +5,33 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "bedrock-agentcore>=1.6.0",
-    "boto3>=1.42.79",
-    "crewai-tools>=1.6.1",
-    "httpx>=0.28.1",
-    "ipykernel>=7.2.0",
-    "langchain[openai]>=1.2.15",
-    "langgraph>=1.1.6",
-    "loguru>=0.7.3",
-    "mcp[cli]>=1.26.0",
-    "metaflow>=2.19.24",
-    "openai>=2.30.0",
-    "openai-agents>=0.13.2",
-    "pandas>=3.0.2",
-    "pydantic>=2.12.5",
-    "pylint>=4.0.5",
-    "python-dotenv>=1.2.2",
-    "ruff>=0.15.8",
-    "strands-agents-tools>=0.4.1",
-    "strands-agents[openai]>=1.35.0",
+    "metaflow>=2.19.29",
 ]
 
 [dependency-groups]
 lint = [
     "ruff>=0.15.8",
+]
+workflow = [
+    "metaflow>=2.19.29",
+    "pandas>=2.3.1",
+    "scikit-learn>=1.8.0",
+    "torch>=2.12.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", marker = "sys_platform != 'linux'" },
+  { index = "pytorch-cu126", marker = "sys_platform == 'linux'" },
 ]

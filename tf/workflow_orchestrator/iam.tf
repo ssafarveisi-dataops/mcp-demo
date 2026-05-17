@@ -140,7 +140,7 @@ resource "aws_iam_role_policy" "iam_metaflow_access_policy" {
           "ecr:BatchCheckLayerAvailability"
         ]
         Resource = [
-          "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/science-dev-demo-metaflow"
+          "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/science-dev-demo-metaflow-gpu"
         ]
       }
     ]

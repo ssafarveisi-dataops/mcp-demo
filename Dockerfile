@@ -1,50 +1,56 @@
-FROM python:3.12-slim
+# syntax=docker/dockerfile:1.7
 
-# Copy uv binaries
+FROM python:3.12-slim AS builder
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Environment configuration
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=0 \
-    UV_NATIVE_TLS=1
+    UV_SYSTEM_CERTS=1
 
-WORKDIR /app
+WORKDIR /metaflow
 
-# Build argument
-ARG BUILD_ENV=production
-ENV BUILD_ENV=$BUILD_ENV
-
-# Install certificates (root required)
+# Install custom CA certificates for dependency installation
 COPY build/certificates/ /usr/local/share/ca-certificates/
 
-RUN if [ "$BUILD_ENV" = "production" ] ; then \
-        echo "production env"; \
-    else \
-        echo "non-production env: $BUILD_ENV"; \
-        update-ca-certificates ; \
-    fi
+RUN update-ca-certificates
 
-# Copy dependency files first (better caching)
-COPY pyproject.toml uv.lock ./
+# First install dependencies only.
+# This layer is highly cacheable as long as pyproject.toml and uv.lock do not change.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync \
+      --locked \
+      --no-install-project \
+      --no-dev \
+      --only-group workflow
 
-# Install dependencies (still as root)
-RUN uv sync --frozen --no-cache
+# Copy project metadata and install the project itself if needed
+COPY pyproject.toml uv.lock README.md /metaflow/
 
-# Copy application code
-COPY aws_bedrock_agentcore/dummy_agent.py ./
+# UV does not install pip by default.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync \
+      --locked \
+      --no-dev \
+      --only-group workflow \
+    && /metaflow/.venv/bin/python -m ensurepip --upgrade \
+    && /metaflow/.venv/bin/python -m pip install --upgrade pip
 
-# ---- Create non-root user ----
-RUN useradd -m -u 10001 appuser
+FROM python:3.12-slim AS runtime
 
-# Ensure proper ownership
-RUN chown -R appuser:appuser /app
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/metaflow/.venv/bin:${PATH}"
 
-# Switch to non-root user
-USER appuser
+# Create non-root user
+RUN groupadd --system --gid 999 nonroot \
+    && useradd --system --gid 999 --uid 999 --create-home --home-dir /home/nonroot nonroot
 
-# Expose port
-EXPOSE 8080
+COPY --from=builder --chown=nonroot:nonroot /metaflow /metaflow
 
-# Run application
-CMD ["uv", "run", "python", "dummy_agent.py"]
+USER nonroot
+
+WORKDIR /metaflow

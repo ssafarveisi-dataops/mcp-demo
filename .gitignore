@@ -13,3 +13,5 @@ archived/
 .terraform
 .metaflow
 *.zip
+*certificates*
+*.log

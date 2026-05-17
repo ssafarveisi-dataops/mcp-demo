@@ -1,7 +1,7 @@
 # Create a S3 bucket for storing metaflow data
 resource "aws_s3_bucket" "metaflow" {
   bucket_prefix = var.bucket_name_prefix
-
+  force_destroy = true
   tags = {
     Metaflow = "true"
   }
@@ -32,7 +32,7 @@ resource "aws_security_group" "metaflow_batch" {
 }
 
 resource "aws_batch_compute_environment" "metaflow_batch" {
-  compute_environment_name = var.compute_environment_name
+  compute_environment_name_prefix = "metaflow-batch-"
 
   compute_resources {
     instance_role = aws_iam_instance_profile.ecs_instance_role.arn
@@ -60,7 +60,12 @@ resource "aws_batch_compute_environment" "metaflow_batch" {
 
   service_role = aws_iam_role.aws_batch_service_role.arn
   type         = "MANAGED"
-  depends_on   = [aws_iam_role_policy_attachment.aws_batch_service_role]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.aws_batch_service_role]
 }
 
 # Create the Batch Job Queue

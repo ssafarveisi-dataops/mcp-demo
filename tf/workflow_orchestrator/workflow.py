@@ -1,127 +1,59 @@
-import sys
-
-import pandas as pd
-from loguru import logger
-from metaflow import FlowSpec, step, batch, retry, Parameter, S3
+from metaflow import FlowSpec, step, batch, Parameter, S3
 from custom import some_function
-
-logger.remove()
-
-logger.add(
-    sys.stderr,
-    level="INFO",
-    colorize=False,
-    format=(
-        "{time:YYYY-MM-DD HH:mm:ss} | "
-        "{level} | "
-        "{name}:{function}:{line} | "
-        "{message}"
-    ),
-)
-
 
 class MetaflowEvents(FlowSpec):
 
-    # Parameters to send when we invoke the step function via event bridge or from within another step function
     bucket = Parameter('bucket', help='The S3 bucket where the json file is')
     prefix = Parameter('prefix', help='The S3 prefix that points to a json file')
 
-    # Image pushed to AWS ECR (built with linux/amd64 platform)
-    @batch(image="463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow:latest")
-    @retry(times=2, minutes_between_retries=1)
-    @step(start=True)
-    def read_raw_csv_file(self):
-        """
-        Reads csv files containing raw data from S3
-        """
-        # Execute some function from a custom module to demonstrate how to include custom code in the image and use it in the step function
-        logger.info("Executing some_function from custom module...")
+    # Share this image across all steps that require it to avoid redundant builds and uploads
+    IMAGE = "463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow-gpu:latest"
+
+    @batch(image=IMAGE, cpu=2, memory=8192)
+    @step
+    def start(self):
+        import sklearn
+
+        print(f"Scikit-learn version: {sklearn.__version__}")
+
+        print("Running some_function()")
         some_function()
-        logger.info("Finished executing some_function.")
+        print("Finished some_function()")
 
-        logger.info(
-            "MetaflowEvents started with bucket={} and prefix={}",
-            self.bucket,
-            self.prefix,
-        )
-
-        # Read CSV files from S3 (these are hypothetical csv files produced by a glue spark job)
         with S3() as s3:
             files = list(s3.list_recursive([f"s3://{self.bucket}/{self.prefix}"]))
-            logger.info("Found {} file(s) under s3://{}/{}", len(files), self.bucket, self.prefix)
+            print(f"Found {len(files)} file(s) under s3://{self.bucket}/{self.prefix}")
 
-            loaded = s3.get_many([f.url for f in files])
-            local_tmp_file_paths = [f.path for f in loaded]
+        self.next(self.test_package_installed)
 
-            df = pd.DataFrame()
-
-            for path in local_tmp_file_paths:
-                logger.info("File downloaded from S3 to local path: {}", path)
-                df = pd.concat([df, pd.read_csv(path)])
-
-            self.df = df
-
-        logger.info("Finished reading raw CSV files. DataFrame shape: {}", self.df.shape)
-
-        self.next(self.preprocess, self.execute_sql)
-
-    @batch(image="python:3.12", cpu=2, memory=5120)
-    @step()
-    def preprocess(self):
-        """
-        Runs preprocessing on the raw csv file fetched from S3
-        """
-        logger.info("Preprocessing pandas DataFrame with shape: {}", self.df.shape)
-
-        df_to_preprocess = self.df
-
-        # Do some preprocessing here (for demonstration purposes)
-        self.df_preprocessed = df_to_preprocess.groupby("event_category").count().reset_index()
-
-        logger.info(
-            "Preprocessing finished. Preprocessed DataFrame shape: {}",
-            self.df_preprocessed.shape,
-        )
-
-        self.next(self.join)
-
-    @batch(image="python:3.12", cpu=1)
-    @step()
-    def execute_sql(self):
-        """
-        Executes SQL queries
-        """
-        logger.info("Loading SQL query from file...")
-        with open("sql/queries.sql", "r") as f:
-            self.sql_query = f.read()
-
-        logger.info("SQL query loaded:\n{}", self.sql_query)
-
-        self.next(self.join)
-
-    @batch(image="python:3.12", cpu=2, memory=5120)
-    @step()
-    def join(self, inputs):
-        """
-        Joins the results of the parallel steps preprocess and execute_sql
-        """
-        logger.info("Joining results from preprocess and execute_sql steps...")
-        for input in inputs:
-            if hasattr(input, "df_preprocessed"):
-                logger.info("Received preprocessed DataFrame with shape: {}", input.df_preprocessed.shape)
-            if hasattr(input, "sql_query"):
-                logger.info("Received SQL query:\n{}", input.sql_query)
+    @batch(image=IMAGE, gpu=1, cpu=2, memory=8192)
+    @step
+    def test_package_installed(self):
+        try:
+            import torch
+            print(f"Successfully imported torch version: {torch.__version__}")
+            # Check for GPU availability
+            if torch.cuda.is_available():
+                print("GPU is available. Running a simple tensor operation on GPU.")
+                # Print GPU device name
+                print(f"GPU Device Name: {torch.cuda.get_device_name(0)}")
+                # Perform a simple tensor operation on the GPU to confirm it's working
+                device = torch.device("cuda")
+                x = torch.tensor([1.0, 2.0, 3.0], device=device)
+                y = x * 2
+                print(f"Tensor on GPU: {y}")
+            else:
+                print("GPU is not available. Please check your environment.")
+        except ImportError as e:
+            print(f"Failed to import torch: {e}")
+            raise
 
         self.next(self.end)
 
-    @batch(image="python:3.12")
     @step
     def end(self):
-        """
-        Last step
-        """
-        logger.info("MetaflowEvents is finished.")
-
+        """End step of the workflow."""
+        pass
 
 if __name__ == '__main__':
     MetaflowEvents()
