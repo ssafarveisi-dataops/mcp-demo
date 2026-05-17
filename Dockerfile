@@ -35,9 +35,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync \
       --locked \
       --no-dev \
-      --only-group workflow \
-    && /metaflow/.venv/bin/python -m ensurepip --upgrade \
-    && /metaflow/.venv/bin/python -m pip install --upgrade pip
+      --only-group workflow
 
 FROM python:3.12-slim AS runtime
 
