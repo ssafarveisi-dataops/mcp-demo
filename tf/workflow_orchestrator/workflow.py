@@ -10,8 +10,9 @@ from metaflow import (
     timeout,
     catch,
     project,
-    current
+    current,
 )
+
 
 @project(name="dataops_demo_metaflow")
 class MetaflowEvents(FlowSpec):
@@ -24,13 +25,15 @@ class MetaflowEvents(FlowSpec):
     redundant installations. This also removes the need to install
     pip in the virtual environment created by uv in the custom image.
     """
-    bucket = Parameter('bucket', help='The S3 bucket where the json file is')
-    prefix = Parameter('prefix', help='The S3 prefix that points to a json file')
+
+    bucket = Parameter("bucket", help="The S3 bucket where the json file is")
+    prefix = Parameter("prefix", help="The S3 prefix that points to a json file")
 
     # Share this image across all steps that require it to avoid redundant builds and uploads
     IMAGE_GPU = "463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow-gpu:latest"
-    IMAGE_CPU = "463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow:latest"
-
+    IMAGE_CPU = (
+        "463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow:latest"
+    )
 
     @catch(print_exception=False, var="timeout")
     @timeout(seconds=60)
@@ -73,6 +76,7 @@ class MetaflowEvents(FlowSpec):
     def import_cuda_torch(self):
         try:
             import torch
+
             print(f"Successfully imported torch version: {torch.__version__}")
             # Check for GPU availability
             if torch.cuda.is_available():
@@ -98,5 +102,6 @@ class MetaflowEvents(FlowSpec):
         """End step of the workflow."""
         pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     MetaflowEvents()
