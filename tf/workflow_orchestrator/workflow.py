@@ -1,6 +1,19 @@
-from metaflow import FlowSpec, step, batch, Parameter, S3, environment
+import time
 from custom import some_function
+from metaflow import (
+    FlowSpec,
+    step,
+    batch,
+    Parameter,
+    S3,
+    environment,
+    timeout,
+    catch,
+    project,
+    current
+)
 
+@project(name="dataops_demo_metaflow")
 class MetaflowEvents(FlowSpec):
     """
     A simple Metaflow workflow that demonstrates the use of batch steps with GPU support,
@@ -15,13 +28,32 @@ class MetaflowEvents(FlowSpec):
     prefix = Parameter('prefix', help='The S3 prefix that points to a json file')
 
     # Share this image across all steps that require it to avoid redundant builds and uploads
-    IMAGE = "463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow-gpu:latest"
+    IMAGE_GPU = "463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow-gpu:latest"
+    IMAGE_CPU = "463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow:latest"
 
-    @batch(image=IMAGE, cpu=2, memory=8192)
+
+    @catch(print_exception=False, var="timeout")
+    @timeout(seconds=60)
+    @batch(image=IMAGE_CPU)
+    @step
+    def start(self):
+        print("Project name:", current.project_name)
+
+        for i in range(100):
+            print(i)
+            time.sleep(1)
+        self.next(self.import_sklearn)
+
+    @batch(image=IMAGE_GPU, cpu=2, memory=8192)
     @environment(vars={"METAFLOW_SKIP_INSTALL_DEPENDENCIES": 1})
-    @step(start=True)
+    @step
     def import_sklearn(self):
         import sklearn
+
+        if self.timeout:
+            print("The previous step timed out")
+        else:
+            print("all ok!")
 
         print(f"Scikit-learn version: {sklearn.__version__}")
 
@@ -35,7 +67,7 @@ class MetaflowEvents(FlowSpec):
 
         self.next(self.import_cuda_torch)
 
-    @batch(image=IMAGE, gpu=1, cpu=2, memory=8192)
+    @batch(image=IMAGE_GPU, gpu=1, cpu=2, memory=8192)
     @environment(vars={"METAFLOW_SKIP_INSTALL_DEPENDENCIES": 1})
     @step
     def import_cuda_torch(self):
@@ -60,6 +92,7 @@ class MetaflowEvents(FlowSpec):
 
         self.next(self.end)
 
+    @batch(image=IMAGE_CPU)
     @step
     def end(self):
         """End step of the workflow."""

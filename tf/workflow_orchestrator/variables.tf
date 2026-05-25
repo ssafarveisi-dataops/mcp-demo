@@ -4,12 +4,6 @@ variable "aws_region" {
   default     = "eu-west-1"
 }
 
-variable "bucket_name_prefix" {
-  type        = string
-  description = "Naming prefix of an S3 bucket for metaflow data"
-  default     = "metaflow"
-}
-
 variable "dynamodb_name" {
   type        = string
   description = "name of the AWS Dynamo DB"

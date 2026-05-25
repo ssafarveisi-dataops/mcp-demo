@@ -12,7 +12,6 @@
 | <a name="input_batch_security_group_name"></a> [batch\_security\_group\_name](#input\_batch\_security\_group\_name) | Name of the security group used for tasks in the AWS batch compute environment | `string` | `"metaflow_batch_compute_security_group"` | no |
 | <a name="input_batch_service_role_name"></a> [batch\_service\_role\_name](#input\_batch\_service\_role\_name) | Name of the AWS batch service IAM role | `string` | `"aws_batch_service_role"` | no |
 | <a name="input_bid_percentage"></a> [bid\_percentage](#input\_bid\_percentage) | Spot bid percentage for AWS Batch compute | `string` | `"100"` | no |
-| <a name="input_bucket_name_prefix"></a> [bucket\_name\_prefix](#input\_bucket\_name\_prefix) | Naming prefix of an S3 bucket for metaflow data | `string` | `"metaflow"` | no |
 | <a name="input_dynamodb_name"></a> [dynamodb\_name](#input\_dynamodb\_name) | name of the AWS Dynamo DB | `string` | `"metaflow"` | no |
 | <a name="input_ecs_instance_role_name"></a> [ecs\_instance\_role\_name](#input\_ecs\_instance\_role\_name) | Name of the ECS IAM instance role | `string` | `"metaflow_ecs_instance_role"` | no |
 | <a name="input_eventbridge_role_name"></a> [eventbridge\_role\_name](#input\_eventbridge\_role\_name) | name of the eventbridge role | `string` | `"metaflow_eventbridge_role"` | no |
