@@ -15,13 +15,17 @@ variable "max_concurrency" {
   default     = 10
 }
 
-variable "output_bucket" {
-  description = "Output bucket name for the state machine"
+variable "execution_role_arn" {
+  description = "Execution role ARN for the state machine"
   type        = string
 }
 
+variable "lambda_role_arn" {
+  description = "The lambda role that allows creating the cloud watch group and invoking Bedrock AgentCore Runtime"
+  type        = string
+}
 
-variable "execution_role_arn" {
-  description = "Execution role ARN for the state machine"
+variable "agent_runtime_arn" {
+  description = "ARN for the Bedrock AgentCore Runtime"
   type        = string
 }

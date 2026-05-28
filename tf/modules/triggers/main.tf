@@ -30,8 +30,10 @@ resource "aws_lambda_function" "this" {
 
   environment {
     variables = {
-      SQS_QUEUE_URL     = var.sqs_queue_url
-      STATE_MACHINE_ARN = var.state_machine_arn
+      SQS_QUEUE_URL        = var.sqs_queue_url
+      STATE_MACHINE_ARN    = var.state_machine_arn
+      OUTPUT_BUCKET        = var.output_bucket
+      OUTPUT_BUCKET_PREFIX = var.output_bucket_prefix
     }
   }
   depends_on = [aws_cloudwatch_log_group.lambda_log_group]
@@ -61,7 +63,7 @@ resource "aws_cloudwatch_metric_alarm" "this" {
 resource "aws_cloudwatch_event_rule" "lambda_trigger" {
   name                = "${var.resource_prefix}-trigger"
   description         = "Triggers a Lambda function on a schedule"
-  schedule_expression = "rate(5 minutes)"
+  schedule_expression = "rate(2 minutes)"
 }
 
 resource "aws_cloudwatch_event_target" "this" {
@@ -99,11 +101,10 @@ resource "aws_cloudwatch_event_rule" "s3_upload_trigger" {
 }
 
 resource "aws_cloudwatch_event_target" "workflow_trigger" {
-  rule       = aws_cloudwatch_event_rule.s3_upload_trigger.name
-  target_id  = "${var.resource_prefix}-send-sqs-message-trigger"
-  role_arn   = var.eventbridge_role_arn
-  arn        = var.sqs_queue_arn
-  input_path = "$.detail"
+  rule      = aws_cloudwatch_event_rule.s3_upload_trigger.name
+  target_id = "${var.resource_prefix}-send-sqs-message-trigger"
+  role_arn  = var.eventbridge_role_arn
+  arn       = var.sqs_queue_arn
 
   sqs_target {
     message_group_id = "default"

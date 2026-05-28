@@ -1,6 +1,6 @@
 resource "aws_s3_bucket" "input_bucket" {
   bucket        = "${var.resource_prefix}-input"
-  force_destroy = false
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_versioning" "input_bucket" {
@@ -17,7 +17,7 @@ resource "aws_s3_bucket_notification" "input_bucket" {
 
 resource "aws_s3_bucket" "output_bucket" {
   bucket        = "${var.resource_prefix}-output"
-  force_destroy = false
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_versioning" "output_bucket" {

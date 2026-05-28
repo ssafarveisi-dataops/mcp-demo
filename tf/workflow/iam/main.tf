@@ -154,6 +154,26 @@ resource "aws_iam_role_policy" "sfn_execution_policy" {
   })
 }
 
+resource "aws_iam_role_policy" "sfn_trigger_lambda_function" {
+  name = "sfn-trigger-lambda-function-policy"
+  role = aws_iam_role.sfn_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = [
+          "arn:aws:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:${local.resource_prefix}-invoke-agent"
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role" "lambda_role" {
   name = "${local.resource_prefix}-lambda-sfn-role"
 
@@ -171,6 +191,7 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
+# Permission to create CloudWatch Logs
 resource "aws_iam_role_policy" "lambda_basic_execution" {
   name = "${local.resource_prefix}-lambda-logging-policy"
   role = aws_iam_role.lambda_role.id
@@ -181,11 +202,19 @@ resource "aws_iam_role_policy" "lambda_basic_execution" {
       {
         Effect = "Allow"
         Action = [
-          "logs:CreateLogGroup",
+          "logs:CreateLogGroup"
+        ]
+        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.resource_prefix}-invoke-step-function"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.resource_prefix}-invoke-step-function:*"
+        Resource = [
+          "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.resource_prefix}-invoke-step-function:*"
+        ]
       }
     ]
   })
@@ -263,6 +292,74 @@ resource "aws_iam_role_policy" "eventbridge_sqs_policy" {
         ]
         Resource = [
           "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.resource_prefix}-*",
+        ]
+      }
+    ]
+  })
+}
+
+# Execution role for the invoke agent Lambda
+resource "aws_iam_role" "agentcore_runtime_lambda" {
+  name = "${local.resource_prefix}-lambda"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "lambda_logs_policy" {
+  name = "${local.resource_prefix}-agentcore-runtime-lambda-logs-policy"
+  role = aws_iam_role.agentcore_runtime_lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup"
+        ]
+        Resource = [
+          "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.resource_prefix}-invoke-agent"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = [
+          "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.resource_prefix}-invoke-agent:*"
+        ]
+      }
+    ]
+  })
+}
+
+# Lambda policy for Bedrock AgentCore Runtime
+resource "aws_iam_role_policy" "lambda_bedrock_agent_runtime_policy" {
+  name = "${local.resource_prefix}-lambda-bedrock-agent-runtime-policy"
+  role = aws_iam_role.agentcore_runtime_lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock-agentcore:InvokeAgentRuntime"
+        ]
+        Resource = [
+          "arn:aws:bedrock-agentcore:${var.aws_region}:${data.aws_caller_identity.current.account_id}:runtime/strands_agent-*"
         ]
       }
     ]

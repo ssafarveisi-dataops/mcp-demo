@@ -32,3 +32,13 @@ variable "eventbridge_role_arn" {
   description = "ARN of the role that allows EventBridge to send messages to SQS"
   type        = string
 }
+
+variable "output_bucket_prefix" {
+  description = "The prefix in the output bucket where the results are stored"
+  type        = string
+}
+
+variable "output_bucket" {
+  description = "Bucket where we store the results from invoking the Bedrock AgentCore Runtime"
+  type        = string
+}

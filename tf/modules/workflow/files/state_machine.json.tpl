@@ -10,12 +10,13 @@
           "InputType": "JSONL"
         },
         "Parameters": {
-          "Bucket.$": "$.bucket.name",
-          "Key.$": "$.object.key"
+          "Bucket.$": "$.InputS3Bucket",
+          "Key.$": "$.InputS3Key"
         }
       },
       "MaxConcurrency": ${max_concurrency},
       "ToleratedFailurePercentage": 25,
+      "Label": "ProcessJSONL",
       "ItemProcessor": {
         "ProcessorConfig": {
           "Mode": "DISTRIBUTED",
@@ -25,18 +26,22 @@
         "States": {
           "InvokeAgentRuntime": {
             "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
             "Parameters": {
-              "AgentRuntimeArn": "arn:aws:bedrock-agentcore:eu-west-1:463470983643:runtime/strands_agent-ZicWM58L42",
-              "Payload.$": "$",
-              "RuntimeSessionId.$": "$.id"
+              "FunctionName": "arn:aws:lambda:eu-west-1:463470983643:function:demo-step-functions-invoke-agent",
+              "Payload": {
+                "Payload.$": "$"
+              }
             },
-            "Resource": "arn:aws:states:::aws-sdk:bedrockagentcore:invokeAgentRuntime",
-            "TimeoutSeconds": 900,
+            "ResultSelector": {
+              "Response.$": "$.Payload"
+            },
+            "OutputPath": "$.Response",
             "Retry": [
               {
                 "ErrorEquals": ["States.ALL"],
                 "BackoffRate": 2,
-                "IntervalSeconds": 1,
+                "IntervalSeconds": 2,
                 "MaxAttempts": 3,
                 "JitterStrategy": "FULL"
               }
@@ -44,72 +49,62 @@
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
-                "ResultPath": "$.bedrockRuntimeError",
-                "Next": "StopRuntimeSession"
+                "ResultPath": "$.ErrorInfo",
+                "Next": "StopSessionFailed"
               }
             ],
-            "ResultPath": "$.bedrockRuntimeResult",
-            "Next": "StopRuntimeSession"
+            "TimeoutSeconds": 900,
+            "HeartbeatSeconds": 900,
+            "Next": "StopSessionSuccess"
           },
-          "StopRuntimeSession": {
+          "StopSessionSuccess": {
             "Type": "Task",
+            "Resource": "arn:aws:states:::aws-sdk:bedrockagentcore:stopRuntimeSession",
             "Parameters": {
               "AgentRuntimeArn": "arn:aws:bedrock-agentcore:eu-west-1:463470983643:runtime/strands_agent-ZicWM58L42",
-              "RuntimeSessionId.$": "$.id",
-              "Qualifier": "DEFAULT"
+              "RuntimeSessionId.$": "$.id"
             },
-            "Resource": "arn:aws:states:::aws-sdk:bedrockagentcore:stopRuntimeSession",
-            "ResultPath": "$.stopRuntimeResult",
-            "Next": "CheckInvokeStatus",
-            "TimeoutSeconds": 60,
-            "Retry": [
-              {
-                "ErrorEquals": [
-                  "States.ALL"
-                ],
-                "BackoffRate": 2,
-                "IntervalSeconds": 1,
-                "MaxAttempts": 3,
-                "JitterStrategy": "FULL"
-              }
-            ]
-          },
-          "CheckInvokeStatus": {
-            "Type": "Choice",
-            "Choices": [
-              {
-                "Variable": "$.bedrockRuntimeError",
-                "IsPresent": true,
-                "Next": "FailAfterCleanup"
-              }
-            ],
-            "Default": "ParseResponse"
-          },
-          "FailAfterCleanup": {
-            "Type": "Fail",
-            "ErrorPath": "$.bedrockRuntimeError.Error",
-            "CausePath": "$.bedrockRuntimeError.Cause"
-          },
-          "ParseResponse": {
-            "Type": "Pass",
-            "Parameters": {
-              "parsed.$": "States.StringToJson($.bedrockRuntimeResult.Response)",
-              "stopRuntimeResult.$": "$.stopRuntimeResult"
-            },
+            "ResultPath": null,
             "End": true
+          },
+          "StopSessionFailed": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::aws-sdk:bedrockagentcore:stopRuntimeSession",
+            "Parameters": {
+              "AgentRuntimeArn": "arn:aws:bedrock-agentcore:eu-west-1:463470983643:runtime/strands_agent-ZicWM58L42",
+              "RuntimeSessionId.$": "$.id"
+            },
+            "ResultPath": "$.StopResult",
+            "Next": "FailItem"
+          },
+          "FailItem": {
+            "Type": "Fail",
+            "Cause": "Agent invocation failed after retries.",
+            "Error": "AgentInvocationFailed"
           }
         }
       },
       "ResultWriter": {
         "Resource": "arn:aws:states:::s3:putObject",
         "Parameters": {
-          "Bucket": "${output_bucket}",
-          "Prefix": "results/"
+          "Bucket.$": "$.OutputS3Bucket",
+          "Prefix.$": "$.OutputS3Prefix"
         },
         "WriterConfig": {
           "OutputType": "JSONL",
           "Transformation": "COMPACT"
         }
+      },
+      "ResultPath": "$.MapResult",
+      "Next": "WriteDoneFile"
+    },
+    "WriteDoneFile": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:s3:putObject",
+      "Parameters": {
+        "Bucket.$": "$.OutputS3Bucket",
+        "Key.$": "States.Format('{}/{}/.DONE', $.OutputS3Prefix, States.ArrayGetItem(States.StringSplit($.MapResult.MapRunArn, ':'), 7))",
+        "Body": ""
       },
       "End": true
     }

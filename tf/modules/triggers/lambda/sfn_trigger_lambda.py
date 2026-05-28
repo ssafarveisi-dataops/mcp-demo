@@ -39,7 +39,9 @@ SQS_QUEUE_URL      -- URL of the SQS FIFO queue.
 import json
 import logging
 import os
+import time
 from typing import Any
+from datetime import datetime
 
 import boto3
 from botocore.exceptions import ClientError
@@ -232,6 +234,8 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     # ------------------------------------------------------------------
     state_machine_arn: str = os.environ["STATE_MACHINE_ARN"]
     sqs_queue_url: str = os.environ["SQS_QUEUE_URL"]
+    output_bucket: str = os.environ["OUTPUT_BUCKET"]
+    output_bucket_prefix: str = os.environ["OUTPUT_BUCKET_PREFIX"]
 
     logger.info(
         "lambda_handler invoked | STATE_MACHINE_ARN=%s  SQS_QUEUE_URL=%s",
@@ -270,14 +274,42 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     body = json.loads(message["Body"])
     try:
         # Extract the S3 event data to match the expected input format of the Step Function state machine.
-        sfn_input: str = message["Body"]
+        detail = body["detail"]
+        input_bucket = detail["bucket"]["name"]
+        input_key = detail["object"]["key"]
+        object_etag = detail["object"]["etag"]
+
+        # Extract the directory path without the filename
+        date_string = f"{datetime.now():%Y-%m-%d}-{int(time.time())}"
+        output_bucket_prefix = f"{output_bucket_prefix}/{date_string}"
+
+        # Build the Step Function input with new schema
+        sfn_input_dict = {
+            "InputS3Bucket": input_bucket,
+            "InputS3Key": input_key,
+            "OutputS3Bucket": output_bucket,
+            "OutputS3Prefix": output_bucket_prefix,
+        }
+
+        sfn_input: str = json.dumps(sfn_input_dict)
+
         # Generate a run name based on the object key and eTag
-        run_name = f"{body['object']['key']}_{body['object']['etag']}"
-    except KeyError:
-        logger.warning("SQS message body does not contain required keys.")
+        safe_key = input_key.replace("/", "-").replace(".", "-")
+        run_name = f"{safe_key}-{object_etag}"
+
+        # Truncate run name if needed (Step Functions has 80 char limit)
+        if len(run_name) > 80:
+            run_name = run_name[:80]
+
+    except KeyError as exc:
+        logger.warning(
+            "SQS message body does not contain expected S3 event structure: %s",
+            exc,
+        )
         return {
             "status": "FAILED",
-            "reason": "SQS message body does not contain required keys",
+            "reason": f"Invalid S3 event structure: missing key {exc}",
+            "messageId": message_id
         }
 
     logger.info(
