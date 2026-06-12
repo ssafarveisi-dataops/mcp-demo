@@ -27,3 +27,39 @@ output "metaflow_datastore_bucket_name" {
   value       = aws_s3_bucket.metaflow.bucket
   description = "Name of the bucket where we store metaflow data"
 }
+
+output "database_password" {
+  value       = random_password.this.result
+  description = "The database password"
+  sensitive   = true
+}
+
+output "rds_master_instance_endpoint" {
+  value       = aws_db_instance.this.endpoint
+  description = "The database connection endpoint in address:port format"
+}
+
+output "network_load_balancer_dns_name" {
+  value       = aws_lb.this.dns_name
+  description = "The DNS addressable name for the Network Load Balancer that accepts requests and forwards them to our Fargate MetaData service instance(s)"
+}
+
+output "METAFLOW_SERVICE_INTERNAL_URL" {
+  value       = "http://${aws_lb.this.dns_name}/"
+  description = "URL for Metadata Service (Accessible in VPC)"
+}
+
+output "METAFLOW_SERVICE_URL" {
+  value       = "https://${aws_api_gateway_rest_api.this.id}.execute-api.eu-west-1.amazonaws.com/api/"
+  description = "URL for Metadata Service (Open to Public Access)"
+}
+
+output "migration_function_arn" {
+  value       = aws_lambda_function.db_migrate_lambda.arn
+  description = "ARN of DB Migration Function"
+}
+
+output "METAFLOW_DEFAULT_METADATA" {
+  value       = "service"
+  description = "Default metadata provider for Metaflow. This is used by the Metaflow client to determine which metadata provider to use if one is not explicitly specified in the code."
+}

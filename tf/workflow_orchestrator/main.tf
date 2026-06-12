@@ -47,8 +47,7 @@ resource "aws_batch_compute_environment" "metaflow_batch" {
       aws_security_group.metaflow_batch.id,
     ]
 
-    subnets = [for subnet in local.private_subnet_list : subnet]
-
+    subnets             = local.private_subnet_list
     type                = "SPOT"
     spot_iam_fleet_role = aws_iam_role.spot_fleet_role.arn
     bid_percentage      = var.bid_percentage

@@ -22,10 +22,17 @@
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_METAFLOW_DEFAULT_METADATA"></a> [METAFLOW\_DEFAULT\_METADATA](#output\_METAFLOW\_DEFAULT\_METADATA) | Default metadata provider for Metaflow. This is used by the Metaflow client to determine which metadata provider to use if one is not explicitly specified in the code. |
+| <a name="output_METAFLOW_SERVICE_INTERNAL_URL"></a> [METAFLOW\_SERVICE\_INTERNAL\_URL](#output\_METAFLOW\_SERVICE\_INTERNAL\_URL) | URL for Metadata Service (Accessible in VPC) |
+| <a name="output_METAFLOW_SERVICE_URL"></a> [METAFLOW\_SERVICE\_URL](#output\_METAFLOW\_SERVICE\_URL) | URL for Metadata Service (Open to Public Access) |
+| <a name="output_database_password"></a> [database\_password](#output\_database\_password) | The database password |
 | <a name="output_metaflow_datastore_bucket_name"></a> [metaflow\_datastore\_bucket\_name](#output\_metaflow\_datastore\_bucket\_name) | Name of the bucket where we store metaflow data |
 | <a name="output_metaflow_eventbridge_role_arn"></a> [metaflow\_eventbridge\_role\_arn](#output\_metaflow\_eventbridge\_role\_arn) | IAM role for Amazon EventBridge to access AWS Step Functions. |
 | <a name="output_metaflow_step_functions_dynamodb_policy"></a> [metaflow\_step\_functions\_dynamodb\_policy](#output\_metaflow\_step\_functions\_dynamodb\_policy) | Policy json allowing access to the step functions dynamodb table. |
 | <a name="output_metaflow_step_functions_dynamodb_table_arn"></a> [metaflow\_step\_functions\_dynamodb\_table\_arn](#output\_metaflow\_step\_functions\_dynamodb\_table\_arn) | AWS DynamoDB table arn for tracking AWS Step Functions execution metadata. |
 | <a name="output_metaflow_step_functions_dynamodb_table_name"></a> [metaflow\_step\_functions\_dynamodb\_table\_name](#output\_metaflow\_step\_functions\_dynamodb\_table\_name) | AWS DynamoDB table name for tracking AWS Step Functions execution metadata. |
 | <a name="output_metaflow_step_functions_role_arn"></a> [metaflow\_step\_functions\_role\_arn](#output\_metaflow\_step\_functions\_role\_arn) | IAM role for AWS Step Functions to access AWS resources (AWS Batch, AWS DynamoDB). |
+| <a name="output_migration_function_arn"></a> [migration\_function\_arn](#output\_migration\_function\_arn) | ARN of DB Migration Function |
+| <a name="output_network_load_balancer_dns_name"></a> [network\_load\_balancer\_dns\_name](#output\_network\_load\_balancer\_dns\_name) | The DNS addressable name for the Network Load Balancer that accepts requests and forwards them to our Fargate MetaData service instance(s) |
+| <a name="output_rds_master_instance_endpoint"></a> [rds\_master\_instance\_endpoint](#output\_rds\_master\_instance\_endpoint) | The database connection endpoint in address:port format |
 <!-- END_TF_DOCS -->

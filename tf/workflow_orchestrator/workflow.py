@@ -1,5 +1,6 @@
 import time
-from custom import some_function
+from itertools import islice
+from helpers.custom import some_function
 from metaflow import (
     FlowSpec,
     step,
@@ -7,14 +8,10 @@ from metaflow import (
     Parameter,
     S3,
     environment,
-    timeout,
-    catch,
-    project,
     current,
+    Flow,
 )
 
-
-@project(name="dataops_demo_metaflow")
 class MetaflowEvents(FlowSpec):
     """
     A simple Metaflow workflow that demonstrates the use of batch steps with GPU support,
@@ -35,16 +32,13 @@ class MetaflowEvents(FlowSpec):
         "463470983643.dkr.ecr.eu-west-1.amazonaws.com/science-dev-demo-metaflow:latest"
     )
 
-    @catch(print_exception=False, var="timeout")
-    @timeout(seconds=60)
     @batch(image=IMAGE_CPU)
     @step
     def start(self):
-        print("Project name:", current.project_name)
-
-        for i in range(100):
+        for i in range(2):
             print(i)
             time.sleep(1)
+
         self.next(self.import_sklearn)
 
     @batch(image=IMAGE_GPU, cpu=2, memory=8192)
@@ -52,11 +46,7 @@ class MetaflowEvents(FlowSpec):
     @step
     def import_sklearn(self):
         import sklearn
-
-        if self.timeout:
-            print("The previous step timed out")
-        else:
-            print("all ok!")
+        import pandas as pd
 
         print(f"Scikit-learn version: {sklearn.__version__}")
 
@@ -67,6 +57,16 @@ class MetaflowEvents(FlowSpec):
         with S3() as s3:
             files = list(s3.list_recursive([f"s3://{self.bucket}/{self.prefix}"]))
             print(f"Found {len(files)} file(s) under s3://{self.bucket}/{self.prefix}")
+
+            # Get the files and load them into a DataFrame
+            loaded = s3.get_many([f.url for f in files])
+            local_tmp_file_paths = [f.path for f in loaded]
+            df = pd.DataFrame()
+            for path in local_tmp_file_paths:
+                print(f"File downloaded from S3 to local path: {path}")
+                df = pd.concat([df, pd.read_csv(path)])
+
+            self.df = df
 
         self.next(self.import_cuda_torch)
 
@@ -96,11 +96,25 @@ class MetaflowEvents(FlowSpec):
 
         self.next(self.end)
 
-    @batch(image=IMAGE_CPU)
+    @batch(image=IMAGE_GPU, gpu=1, cpu=2, memory=8192)
+    @environment(vars={"METAFLOW_SKIP_INSTALL_DEPENDENCIES": 1})
     @step
     def end(self):
-        """End step of the workflow."""
-        pass
+        """
+        End step of the workflow. Retrieves artifacts from a step in previous
+        runs of the same flow. Note that the selected runs may vary depending
+        on how they were triggered (for example, via direct execution or through
+        AWS Step Functions). Although the flow name remains the same, the
+        execution context can influence which runs are returned by the Metaflow
+        Client API.
+        """
+        import pandas as pd
+
+        # This requires metadata service
+        for run in islice(Flow('MetaflowEvents'), 3):
+            df = run["import_sklearn"].task.data.df
+            print(df.shape)
+            print(df.head(), "\n")
 
 
 if __name__ == "__main__":

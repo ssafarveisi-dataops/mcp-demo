@@ -332,3 +332,141 @@ resource "aws_iam_role_policy" "step_functions_dynamodb" {
   role   = aws_iam_role.step_functions_role.id
   policy = data.aws_iam_policy_document.step_functions_dynamodb.json
 }
+
+data "aws_iam_policy_document" "metadata_svc_ecs_task_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      identifiers = [
+        "ecs-tasks.amazonaws.com"
+      ]
+      type = "Service"
+    }
+
+    actions = [
+      "sts:AssumeRole"
+    ]
+  }
+}
+
+resource "aws_iam_role" "metadata_svc_ecs_task_role" {
+  name               = "${local.resource_prefix}-metadata-ecs-task"
+  description        = "This role is passed to AWS ECS' task definition as the `task_role`. This allows the running of the Metaflow Metadata Service to have the proper permissions to speak to other AWS resources."
+  assume_role_policy = data.aws_iam_policy_document.metadata_svc_ecs_task_assume_role.json
+
+  tags = {
+    Metaflow = "true"
+  }
+}
+
+data "aws_iam_policy_document" "custom_s3_batch" {
+  statement {
+    sid = "ObjectAccessMetadataService"
+
+    effect = "Allow"
+
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket"
+    ]
+
+    resources = [
+      aws_s3_bucket.metaflow.arn,
+      "${aws_s3_bucket.metaflow.arn}/*"
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "deny_presigned_batch" {
+  statement {
+    sid = "DenyPresignedBatch"
+
+    effect = "Deny"
+
+    actions = [
+      "s3:*"
+    ]
+
+    resources = [
+      "*"
+    ]
+
+    condition {
+      test = "StringNotEquals"
+      values = [
+        "REST-HEADER"
+      ]
+      variable = "s3:authType"
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "grant_custom_s3_batch" {
+  name   = "custom_s3"
+  role   = aws_iam_role.metadata_svc_ecs_task_role.name
+  policy = data.aws_iam_policy_document.custom_s3_batch.json
+}
+
+resource "aws_iam_role_policy" "grant_deny_presigned_batch" {
+  name   = "deny_presigned"
+  role   = aws_iam_role.metadata_svc_ecs_task_role.name
+  policy = data.aws_iam_policy_document.deny_presigned_batch.json
+}
+
+data "aws_iam_policy_document" "ecs_execution_role_assume_role" {
+  statement {
+    actions = [
+      "sts:AssumeRole"
+    ]
+
+    effect = "Allow"
+
+    principals {
+      identifiers = [
+        "ec2.amazonaws.com",
+        "ecs.amazonaws.com",
+        "ecs-tasks.amazonaws.com",
+        "batch.amazonaws.com"
+      ]
+      type = "Service"
+    }
+  }
+}
+
+resource "aws_iam_role" "ecs_execution_role" {
+  name               = "${local.resource_prefix}-ecs-execution"
+  description        = "This role is passed to our AWS ECS' task definition as the `execution_role`. This allows things like the correct image to be pulled and logs to be stored."
+  assume_role_policy = data.aws_iam_policy_document.ecs_execution_role_assume_role.json
+
+  tags = {
+    Metaflow = "true"
+  }
+}
+
+data "aws_iam_policy_document" "ecs_task_execution_policy" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+
+    # The `"Resource": "*"` is not a concern and the policy that Amazon suggests using
+    # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html
+    resources = [
+      "*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "grant_ecs_access" {
+  name   = "ecs_access"
+  role   = aws_iam_role.ecs_execution_role.name
+  policy = data.aws_iam_policy_document.ecs_task_execution_policy.json
+}

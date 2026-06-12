@@ -8,5 +8,6 @@ locals {
     local.private_subnets.eu-west-1a,
     local.private_subnets.eu-west-1b,
   ]
-  vpc_id = "vpc-06ee282aacf654b7c"
+  vpc_id   = "vpc-06ee282aacf654b7c"
+  vpc_cidr = ["10.206.0.0/16"]
 }
