@@ -10,4 +10,7 @@ locals {
   ]
   vpc_id   = "vpc-06ee282aacf654b7c"
   vpc_cidr = ["10.206.0.0/16"]
+
+  metadata_rds_db_name  = "metaflow"
+  metadata_rds_username = "metaflow"
 }

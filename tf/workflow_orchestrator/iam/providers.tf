@@ -6,9 +6,6 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 6.0.0, < 7.0.0"
     }
-    random = {
-      source = "hashicorp/random"
-    }
   }
 
   backend "s3" {
@@ -17,7 +14,7 @@ terraform {
     use_lockfile = true
     encrypt      = true
     kms_key_id   = "arn:aws:kms:eu-west-1:514595551765:key/78f573d5-804c-4c04-9a30-810f853e62c7"
-    key          = "cognism/aws/environments/data-dev/science/demo_metaflow/workflow/infrastructure/terraform.tfstate"
+    key          = "cognism/aws/environments/data-dev/science/demo_metaflow/workflow/iam/terraform.tfstate"
     profile      = "cognism-data-mlops-dev"
   }
 }
@@ -25,5 +22,5 @@ terraform {
 provider "aws" {
   shared_credentials_files = ["~/.aws/credentials"]
   profile                  = "cognism-data-mlops-dev"
-  region                   = var.aws_region
+  region                   = "eu-west-1"
 }

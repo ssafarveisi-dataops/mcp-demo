@@ -14,7 +14,7 @@ data "aws_iam_policy_document" "lambda_ecs_execute_role" {
 }
 
 resource "aws_iam_role" "lambda_ecs_execute_role" {
-  name               = "${local.resource_prefix}-lambda-ecs-execute"
+  name               = "${var.resource_prefix}-lambda-ecs-execute"
   assume_role_policy = data.aws_iam_policy_document.lambda_ecs_execute_role.json
 
   tags = {
@@ -22,7 +22,7 @@ resource "aws_iam_role" "lambda_ecs_execute_role" {
   }
 }
 
-data "aws_iam_policy_document" "lambda_ecs_task_execute_policy_cloudwatch" {
+data "aws_iam_policy_document" "lambda_ecs_task_execute_cloudwatch" {
   statement {
     sid    = "CreateLogGroup"
     effect = "Allow"
@@ -32,7 +32,7 @@ data "aws_iam_policy_document" "lambda_ecs_task_execute_policy_cloudwatch" {
     ]
 
     resources = [
-      "arn:aws:logs:eu-west-1:${data.aws_caller_identity.current.account_id}:*"
+      "arn:aws:logs:eu-west-1:463470983643:*"
     ]
   }
 
@@ -46,12 +46,12 @@ data "aws_iam_policy_document" "lambda_ecs_task_execute_policy_cloudwatch" {
     ]
 
     resources = [
-      "arn:aws:logs:eu-west-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.resource_prefix}-db-migrate:*"
+      "arn:aws:logs:eu-west-1:463470983643:log-group:/aws/lambda/${var.resource_prefix}-db-migrate:*"
     ]
   }
 }
 
-data "aws_iam_policy_document" "lambda_ecs_task_execute_policy_vpc" {
+data "aws_iam_policy_document" "lambda_ecs_task_execute_vpc" {
   statement {
     sid    = "NetInts"
     effect = "Allow"
@@ -68,16 +68,16 @@ data "aws_iam_policy_document" "lambda_ecs_task_execute_policy_vpc" {
   }
 }
 
-resource "aws_iam_role_policy" "grant_lambda_ecs_cloudwatch" {
-  name   = "cloudwatch"
+resource "aws_iam_role_policy" "lambda_ecs_execute_role_cloudwatch_policy" {
+  name   = "${var.resource_prefix}-lambda-ecs-execute-cloudwatch"
   role   = aws_iam_role.lambda_ecs_execute_role.name
-  policy = data.aws_iam_policy_document.lambda_ecs_task_execute_policy_cloudwatch.json
+  policy = data.aws_iam_policy_document.lambda_ecs_task_execute_cloudwatch.json
 }
 
-resource "aws_iam_role_policy" "grant_lambda_ecs_vpc" {
-  name   = "ecs_task_execute"
+resource "aws_iam_role_policy" "lambda_ecs_execute_role_vpc_policy" {
+  name   = "${var.resource_prefix}-lambda-ecs-execute-vpc"
   role   = aws_iam_role.lambda_ecs_execute_role.name
-  policy = data.aws_iam_policy_document.lambda_ecs_task_execute_policy_vpc.json
+  policy = data.aws_iam_policy_document.lambda_ecs_task_execute_vpc.json
 }
 
 data "archive_file" "db_migrate_lambda" {
@@ -113,7 +113,7 @@ EOF
 }
 
 resource "aws_lambda_function" "db_migrate_lambda" {
-  function_name    = "${local.resource_prefix}-db-migrate"
+  function_name    = "${var.resource_prefix}-db-migrate"
   handler          = "index.handler"
   runtime          = "python3.12"
   memory_size      = 128
@@ -133,7 +133,7 @@ resource "aws_lambda_function" "db_migrate_lambda" {
   }
 
   vpc_config {
-    subnet_ids         = local.private_subnet_list
+    subnet_ids         = var.private_subnets
     security_group_ids = [aws_security_group.metadata_service_security_group.id]
   }
 }

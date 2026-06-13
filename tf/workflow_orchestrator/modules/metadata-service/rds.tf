@@ -1,5 +1,5 @@
 resource "aws_db_parameter_group" "this" {
-  name   = "${local.resource_prefix}-postgres16-pg"
+  name   = "${var.resource_prefix}-postgres16-pg"
   family = "postgres16"
 
   parameter {
@@ -14,8 +14,8 @@ resource "aws_db_parameter_group" "this" {
 }
 
 resource "aws_db_subnet_group" "this" {
-  name       = "${local.resource_prefix}-pg-sg"
-  subnet_ids = local.private_subnet_list
+  name       = "${var.resource_prefix}-pg-sg"
+  subnet_ids = var.private_subnets
 
   tags = {
     Metaflow = "true"
@@ -26,8 +26,8 @@ resource "aws_db_subnet_group" "this" {
  Define a new firewall for our database instance.
 */
 resource "aws_security_group" "rds_security_group" {
-  name   = "${local.resource_prefix}-rds-sg"
-  vpc_id = local.vpc_id
+  name   = "${var.resource_prefix}-rds-sg"
+  vpc_id = var.vpc_id
 
   # ingress only from port 5432
   ingress {
@@ -68,18 +68,18 @@ resource "aws_db_instance" "this" {
   publicly_accessible       = false
   allocated_storage         = 20    # Allocate 20GB
   storage_type              = "gp2" # general purpose SSD
-  storage_encrypted         = false
+  storage_encrypted         = false # Change this later
   engine                    = "postgres"
   engine_version            = "16"
-  instance_class            = "db.t3.small"                       # Hardware configuration
-  identifier                = "${local.resource_prefix}-metaflow" # used for dns hostname needs to be customer unique in region
-  db_name                   = "metaflow"                          # unique id for CLI commands (name of DB table which is why we're not adding the prefix as no conflicts will occur and the API expects this table name)
-  username                  = "metaflow"
+  instance_class            = "db.t3.small"
+  identifier                = "${var.resource_prefix}-metaflow"
+  db_name                   = var.metadata_service_rds_db_name
+  username                  = var.metadata_service_rds_username
   password                  = random_password.this.result
   db_subnet_group_name      = aws_db_subnet_group.this.id
-  max_allocated_storage     = 1000                                                                                  # Upper limit of automatic scaled storage
-  multi_az                  = false                                                                                 # Multiple availability zone?
-  final_snapshot_identifier = "${local.resource_prefix}-metaflow-final-snapshot-${random_pet.final_snapshot_id.id}" # Snapshot upon delete
+  max_allocated_storage     = 1000
+  multi_az                  = false
+  final_snapshot_identifier = "${var.resource_prefix}-metaflow-final-snapshot-${random_pet.final_snapshot_id.id}" # Snapshot upon delete
   vpc_security_group_ids    = [aws_security_group.rds_security_group.id]
   parameter_group_name      = aws_db_parameter_group.this.name
   tags = {

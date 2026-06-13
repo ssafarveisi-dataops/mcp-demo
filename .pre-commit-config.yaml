@@ -12,8 +12,23 @@ repos:
     rev: "v0.23.0"
     hooks:
       - id: terraform-docs-go
-        name: "Workflow orchestrator terraform module docs"
-        args: ["-c", "tf/workflow_orchestrator/.terraform-docs.yaml", "markdown", "tf/workflow_orchestrator"]
-      - id: terraform-docs-go
         name: "Glue terraform module docs"
         args: ["-c", "tf/glue/.terraform-docs.yaml", "markdown", "tf/glue"]
+      - id: terraform-docs-go
+        name: "Glue terraform module docs"
+        args: ["-c", "tf/glue/.terraform-docs.yaml", "markdown", "tf/workflow_orchestrator/modules/batch"]
+      - id: terraform-docs-go
+        name: "Glue terraform module docs"
+        args: ["-c", "tf/glue/.terraform-docs.yaml", "markdown", "tf/workflow_orchestrator/modules/buckets"]
+      - id: terraform-docs-go
+        name: "Glue terraform module docs"
+        args: ["-c", "tf/glue/.terraform-docs.yaml", "markdown", "tf/workflow_orchestrator/modules/metadata-service"]
+      - id: terraform-docs-go
+        name: "Glue terraform module docs"
+        args: ["-c", "tf/glue/.terraform-docs.yaml", "markdown", "tf/workflow_orchestrator/modules/ui"]
+      - id: terraform-docs-go
+        name: "Glue terraform module docs"
+        args: ["-c", "tf/glue/.terraform-docs.yaml", "markdown", "tf/workflow_orchestrator/iam"]
+      - id: terraform-docs-go
+        name: "Glue terraform module docs"
+        args: ["-c", "tf/glue/.terraform-docs.yaml", "markdown", "tf/workflow_orchestrator/infrastructure"]

@@ -1,23 +1,6 @@
-# Create a S3 bucket for storing metaflow data
-resource "aws_s3_bucket" "metaflow" {
-  bucket        = "metaflow-s3-dataops-demo"
-  force_destroy = true
-  tags = {
-    Metaflow = "true"
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "input_bucket" {
-  bucket                  = aws_s3_bucket.metaflow.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
 resource "aws_security_group" "metaflow_batch" {
-  name   = var.batch_security_group_name
-  vpc_id = local.vpc_id
+  name   = "${var.resource_prefix}-batch-sg"
+  vpc_id = var.vpc_id
 
   egress {
     from_port   = 0
@@ -35,7 +18,7 @@ resource "aws_batch_compute_environment" "metaflow_batch" {
   name = "metaflow-batch"
 
   compute_resources {
-    instance_role = aws_iam_instance_profile.ecs_instance_role.arn
+    instance_role = var.batch_ecs_instance_profile_arn # batch_ecs_instance_profile in IAM module
 
     instance_type       = var.batch_instance_types
     allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
@@ -47,9 +30,9 @@ resource "aws_batch_compute_environment" "metaflow_batch" {
       aws_security_group.metaflow_batch.id,
     ]
 
-    subnets             = local.private_subnet_list
+    subnets             = var.private_subnets
     type                = "SPOT"
-    spot_iam_fleet_role = aws_iam_role.spot_fleet_role.arn
+    spot_iam_fleet_role = var.batch_spot_fleet_role_arn # batch_spot_fleet_role in IAM module
     bid_percentage      = var.bid_percentage
 
     tags = {
@@ -57,19 +40,18 @@ resource "aws_batch_compute_environment" "metaflow_batch" {
     }
   }
 
-  service_role = aws_iam_role.aws_batch_service_role.arn
+  service_role = var.batch_service_role_arn # batch_service_role in IAM module
   type         = "MANAGED"
 
   lifecycle {
     create_before_destroy = true
   }
 
-  depends_on = [aws_iam_role_policy_attachment.aws_batch_service_role]
 }
 
 # Create the Batch Job Queue
 resource "aws_batch_job_queue" "metaflow_batch_job_queue" {
-  name     = var.batch_queue_name
+  name     = var.resource_prefix
   state    = "ENABLED"
   priority = 1
   compute_environment_order {
@@ -79,7 +61,7 @@ resource "aws_batch_job_queue" "metaflow_batch_job_queue" {
 }
 
 resource "aws_dynamodb_table" "step_functions_state_table" {
-  name         = var.dynamodb_name
+  name         = var.resource_prefix
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "pathspec"
 

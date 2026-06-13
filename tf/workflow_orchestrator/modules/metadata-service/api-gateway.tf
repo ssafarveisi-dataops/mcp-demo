@@ -7,14 +7,14 @@ resource "aws_api_gateway_rest_api_policy" "this" {
         "Effect" : "Allow",
         "Principal" : "*",
         "Action" : "execute-api:Invoke",
-        "Resource" : "arn:aws:execute-api:eu-west-1:${data.aws_caller_identity.current.account_id}:${aws_api_gateway_rest_api.this.id}/*/*/*"
+        "Resource" : "arn:aws:execute-api:eu-west-1:463470983643:${aws_api_gateway_rest_api.this.id}/*/*/*"
       }
     ],
   })
 }
 
 resource "aws_api_gateway_rest_api" "this" {
-  name        = "${local.resource_prefix}-api"
+  name        = "${var.resource_prefix}-api"
   description = "Allows access to the Metadata service RDS instance"
 
   endpoint_configuration {
@@ -39,7 +39,7 @@ resource "aws_api_gateway_resource" "db" {
 }
 
 resource "aws_api_gateway_vpc_link" "this" {
-  name        = "${local.resource_prefix}-vpclink"
+  name        = "${var.resource_prefix}-vpclink"
   target_arns = [aws_lb.this.arn]
 
   tags = {
